@@ -2652,8 +2652,8 @@ function openWAModal(fsId) {
   if (!item) return;
   const tgl = formatDate(item.tanggal);
   const lines = (item.items||[]).map((it,i)=>`${i+1}. ${it}`).join('\n');
-  const atasan = item.atasan ? `Yth. Bapak/Ibu ${item.atasan},\n\n` : '';
-  const text = `${atasan}Assalamu'alaikum Wr. Wb.\n\nBerikut saya sampaikan *Report Harian Odoo*\n📅 Tanggal: ${tgl}\n👤 Oleh: ${item.by}\n\n*Kegiatan Hari Ini:*\n${lines}\n\nDemikian laporan saya, mohon arahan dan koreksinya.\n\nWassalamu'alaikum Wr. Wb.`;
+  const atasan = item.atasan ? `Selamat sore ${item.atasan}, maaf mengganggu waktunya,` : '';
+  const text = `${atasan}berikut report harian tanggal ${tgl}\n${lines}`;
   document.getElementById('wa-text').textContent = text;
   showModal('modal-wa');
 }
