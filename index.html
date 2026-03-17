@@ -2653,7 +2653,7 @@ function openWAModal(fsId) {
   const tgl = formatDate(item.tanggal);
   const lines = (item.items||[]).map((it,i)=>`${i+1}. ${it}`).join('\n');
   const atasan = item.atasan ? `Selamat sore ${item.atasan}, maaf mengganggu waktunya,` : '';
-  const text = `${atasan} berikut report harian tanggal ${tgl}\n${lines} :`;
+  const text = `${atasan} berikut report harian tanggal ${tgl} :\n${lines}`;
   document.getElementById('wa-text').textContent = text;
   showModal('modal-wa');
 }
