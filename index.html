@@ -221,6 +221,7 @@ body {
 .stat-card.clear.filter-active  { box-shadow: 0 0 0 2px var(--green); }
 .stat-card.pending.filter-active{ box-shadow: 0 0 0 2px var(--yellow); }
 .stat-card.request.filter-active{ box-shadow: 0 0 0 2px var(--blue); }
+#filter-review.filter-active    { box-shadow: 0 0 0 2px var(--blue); }
 
 .filter-indicator {
   font-size: 10px;
@@ -244,6 +245,7 @@ body {
 .stat-card.clear::before { background: var(--green); }
 .stat-card.pending::before { background: var(--yellow); }
 .stat-card.request::before { background: var(--blue); }
+#filter-review::before { background: var(--blue); }
 
 .stat-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
 .stat-value { font-size: 36px; font-weight: 800; font-family: var(--mono); line-height: 1; }
@@ -871,7 +873,7 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
 }
 
 @media (max-width: 400px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stats-grid { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .stat-value { font-size: 24px; }
   .stat-label { font-size: 10px; }
   .page-content { padding: 10px; padding-bottom: 80px; }
@@ -1533,7 +1535,7 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
       </div>
     </div>
     <div class="page-content">
-      <div class="stats-grid">
+      <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
         <div class="stat-card total" id="filter-all" onclick="setDashFilter('all')" style="cursor:pointer">
           <div class="stat-label">Total Kendala</div>
           <div class="stat-value" id="stat-total">0</div>
@@ -1547,10 +1549,16 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
           <div class="stat-sub">Vendor & user selesai</div>
           <div class="filter-indicator" id="fi-clear">Klik untuk filter</div>
         </div>
+        <div class="stat-card" id="filter-review" onclick="setDashFilter('review')" style="cursor:pointer;--card-color:var(--blue);--card-color-dim:var(--blue-dim)">
+          <div class="stat-label" style="color:var(--text3)">Review User</div>
+          <div class="stat-value" id="stat-review" style="color:var(--blue)">0</div>
+          <div class="stat-sub">Vendor done, tunggu user</div>
+          <div class="filter-indicator" id="fi-review">Klik untuk filter</div>
+        </div>
         <div class="stat-card pending" id="filter-pending" onclick="setDashFilter('pending')" style="cursor:pointer">
           <div class="stat-label">Masih Pending</div>
           <div class="stat-value" id="stat-pending">0</div>
-          <div class="stat-sub">Belum selesai</div>
+          <div class="stat-sub">Vendor belum selesai</div>
           <div class="filter-indicator" id="fi-pending">Klik untuk filter</div>
         </div>
         <div class="stat-card request" id="filter-request" onclick="setDashFilter('request')" style="cursor:pointer">
@@ -2477,6 +2485,20 @@ async function toggleCheck(fsId, field) {
 
 function isKendaraClear(item) { return item.vendor && item.reviewUser; }
 
+// 3-state status: 'pending' | 'review' | 'clear'
+function getKendalaStatus(item) {
+  if (item.vendor && item.reviewUser) return 'clear';
+  if (item.vendor && !item.reviewUser) return 'review';
+  return 'pending';
+}
+
+function kendalaStatusBadge(item) {
+  const s = getKendalaStatus(item);
+  if (s === 'clear')  return '<span class="badge badge-green">✅ Clear</span>';
+  if (s === 'review') return '<span class="badge badge-blue">👀 Review User</span>';
+  return '<span class="badge badge-yellow">⏳ Pending</span>';
+}
+
 // ========================
 // REQUEST CRUD
 // ========================
@@ -2837,7 +2859,7 @@ let dashFilter = 'all';
 
 function setDashFilter(f) {
   dashFilter = f;
-  ['all','clear','pending','request'].forEach(k => {
+  ['all','clear','review','pending','request'].forEach(k => {
     const card = document.getElementById('filter-'+k);
     const fi   = document.getElementById('fi-'+k);
     if (!card||!fi) return;
@@ -2851,18 +2873,21 @@ function setDashFilter(f) {
 function renderDashboard() {
   const total   = DB.kendala.length;
   const clear   = DB.kendala.filter(k=>isKendaraClear(k)).length;
-  const pending = total - clear;
+  const review  = DB.kendala.filter(k=>getKendalaStatus(k)==='review').length;
+  const pending = DB.kendala.filter(k=>getKendalaStatus(k)==='pending').length;
   const req     = DB.request.filter(r=>r.status==='Pending').length;
 
   document.getElementById('stat-total').textContent   = total;
   document.getElementById('stat-clear').textContent   = clear;
+  document.getElementById('stat-review').textContent  = review;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-req').textContent     = req;
   document.getElementById('stat-bar').style.width     = total>0?Math.round(clear/total*100)+'%':'0%';
 
   let data = DB.kendala, filterLabel='';
-  if (dashFilter==='clear')   { data=DB.kendala.filter(k=>isKendaraClear(k));  filterLabel='✅ Filter: Sudah Clear'; }
-  if (dashFilter==='pending') { data=DB.kendala.filter(k=>!isKendaraClear(k)); filterLabel='⏳ Filter: Masih Pending'; }
+  if (dashFilter==='clear')   { data=DB.kendala.filter(k=>isKendaraClear(k));              filterLabel='✅ Filter: Sudah Clear'; }
+  if (dashFilter==='review')  { data=DB.kendala.filter(k=>getKendalaStatus(k)==='review'); filterLabel='👀 Filter: Review User'; }
+  if (dashFilter==='pending') { data=DB.kendala.filter(k=>getKendalaStatus(k)==='pending');filterLabel='⏳ Filter: Masih Pending'; }
 
   const fl = document.getElementById('dash-filter-label');
   if (filterLabel) { fl.textContent=filterLabel; fl.style.display=''; }
@@ -2905,7 +2930,7 @@ function renderDashboard() {
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--text)"></td>
       <td><div class="check-item"><div class="check-box ${k.vendor?'checked':''}" data-field="vendor">${k.vendor?'✓':''}</div><span>${k.vendor?'Done':'—'}</span></div></td>
       <td><div class="check-item"><div class="check-box ${k.reviewUser?'checked':''}" data-field="reviewUser">${k.reviewUser?'✓':''}</div><span>${k.reviewUser?'Done':'—'}</span></div></td>
-      <td>${isClear?'<span class="badge badge-green">✅ Clear</span>':'<span class="badge badge-yellow">⏳ Pending</span>'}</td>
+      <td>${kendalaStatusBadge(k)}</td>
       <td><div class="action-row"><button class="btn btn-sm btn-icon">👁️</button><button class="btn btn-sm btn-icon">✏️</button><button class="btn btn-sm btn-danger btn-icon">🗑️</button></div></td>
     `;
     tr.querySelectorAll('td')[2].textContent=k.by;
@@ -2927,7 +2952,7 @@ function renderKendalaTable() {
   DB.kendala.forEach((k,i) => {
     const images=k.images||[];
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="tag">#${i+1}</span></td><td>${formatDate(k.tanggal)}</td><td></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td><td class="img-thumb-cell"></td><td>${isKendaraClear(k)?'<span class="badge badge-green">✅ Clear</span>':'<span class="badge badge-yellow">⏳ Pending</span>'}</td><td><div class="action-row"><button class="btn btn-sm btn-icon">👁️</button><button class="btn btn-sm btn-icon">✏️</button><button class="btn btn-sm btn-danger btn-icon">🗑️</button></div></td>`;
+    tr.innerHTML=`<td><span class="tag">#${i+1}</span></td><td>${formatDate(k.tanggal)}</td><td></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td><td class="img-thumb-cell"></td><td>${kendalaStatusBadge(k)}</td><td><div class="action-row"><button class="btn btn-sm btn-icon">👁️</button><button class="btn btn-sm btn-icon">✏️</button><button class="btn btn-sm btn-danger btn-icon">🗑️</button></div></td>`;
     tr.querySelectorAll('td')[2].textContent=k.by;
     tr.querySelectorAll('td')[3].textContent=k.masalah;
     tr.querySelectorAll('td')[4].textContent=k.solusi||'-';
