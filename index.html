@@ -3093,11 +3093,61 @@ function showDayDetail(dateStr) {
   const report=DB.report.filter(r=>r.tanggal===dateStr);
   document.getElementById('modal-cal-day-title').textContent=`📅 ${formatDate(dateStr)}`;
   let html='';
-  if(kendala.length){html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">🔧 Kendala Odoo</span><span class="badge badge-yellow">${kendala.length}</span></div>`;kendala.forEach(k=>{html+=`<div class="detail-view" style="margin-bottom:8px;cursor:pointer" onclick="openDetailKendala('${k._fsId}')"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-weight:600;font-size:13px">${k.masalah}</span>${isKendaraClear(k)?'<span class="badge badge-green">Clear</span>':'<span class="badge badge-yellow">Pending</span>'}</div><div style="font-size:12px;color:var(--text3);margin-top:4px">By: ${k.by} · Klik untuk detail</div></div>`;});html+=`</div>`;}
-  if(request.length){html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">📝 Request Odoo</span><span class="badge badge-blue">${request.length}</span></div>`;request.forEach(r=>{html+=`<div class="detail-view" style="margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-weight:600;font-size:13px">${r.by}</span><span class="badge badge-blue">${r.status}</span></div><div style="font-size:12px;color:var(--text2);margin-top:4px">${r.desc}</div></div>`;});html+=`</div>`;}
-  if(report.length){html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">📋 Report Harian</span><span class="badge badge-green">${report.length}</span></div>`;report.forEach(r=>{html+=`<div class="detail-view" style="margin-bottom:8px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">👤 ${r.by}</div>${(r.items||[]).map((it,i)=>`<div style="font-size:12px;color:var(--text2);margin-bottom:3px">${i+1}. ${it}</div>`).join('')}<button class="btn btn-sm btn-success" style="margin-top:8px" onclick="openWAModal('${r._fsId}')">📱 Kirim WA</button></div>`;});html+=`</div>`;}
+
+  if(kendala.length){
+    html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">🔧 Kendala Odoo</span><span class="badge badge-yellow">${kendala.length}</span></div>`;
+    kendala.forEach(k=>{
+      html+=`<div class="detail-view" style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-weight:600;font-size:13px">${k.masalah}</span>
+          ${isKendaraClear(k)?'<span class="badge badge-green">✅ Clear</span>':getKendalaStatus(k)==='review'?'<span class="badge badge-blue">👀 Review User</span>':'<span class="badge badge-yellow">⏳ Pending</span>'}
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">By: ${k.by}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  if(request.length){
+    html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">📝 Request Odoo</span><span class="badge badge-blue">${request.length}</span></div>`;
+    request.forEach(r=>{
+      html+=`<div class="detail-view" style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-weight:600;font-size:13px">${r.by}</span>
+          <span class="badge badge-blue">${r.status}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${r.desc}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  if(report.length){
+    html+=`<div style="margin-bottom:18px"><div class="section-header"><span class="section-title">📋 Report Harian</span><span class="badge badge-green">${report.length}</span></div>`;
+    report.forEach(r=>{
+      html+=`<div class="detail-view" style="margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px">👤 ${r.by}</div>
+        ${(r.items||[]).map((it,i)=>`<div style="font-size:12px;color:var(--text2);margin-bottom:3px">${i+1}. ${it}</div>`).join('')}
+        <button class="btn btn-sm btn-success cal-wa-btn" data-id="${r._fsId}" style="margin-top:8px">📱 Kirim WA</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
   if(!html) html=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Tidak ada aktivitas</div></div>`;
-  document.getElementById('modal-cal-day-body').innerHTML=html;
+
+  const body = document.getElementById('modal-cal-day-body');
+  body.innerHTML=html;
+
+  // Attach event listeners after DOM is built
+  // Only report WA button needs interaction
+  body.querySelectorAll('.cal-wa-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      hideModal('modal-cal-day');
+      setTimeout(()=>openWAModal(btn.dataset.id), 120);
+    });
+  });
+
   showModal('modal-cal-day');
 }
 
@@ -3152,6 +3202,9 @@ window.setNoteFilter=setNoteFilter; window.setNoteColor=setNoteColor;
 window.addReportItem=addReportItem;
 window.saveKendala=saveKendala; window.saveRequest=saveRequest; window.saveReport=saveReport; window.saveNote=saveNote;
 window.handleImgInput=handleImgInput;
+window.openDetailKendala=openDetailKendala;
+window.openDetailRequest=openDetailRequest;
+window.openWAModal=openWAModal;
 
 // ========================
 // INIT
