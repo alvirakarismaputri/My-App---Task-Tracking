@@ -1583,6 +1583,7 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
               <th>Tanggal</th>
               <th>Request By</th>
               <th>Kendala</th>
+              <th>Penyelesaian</th>
               <th>Vendor</th>
               <th>Review User</th>
               <th>Status</th>
@@ -2917,17 +2918,24 @@ function renderDashboard() {
     return;
   }
 
-  headers.innerHTML='<th>#</th><th>Tanggal</th><th>Request By</th><th>Kendala</th><th>Vendor</th><th>Review User</th><th>Status</th><th>Aksi</th>';
+  headers.innerHTML='<th>#</th><th>Tanggal</th><th>Request By</th><th>Kendala</th><th>Penyelesaian</th><th>Vendor</th><th>Review User</th><th>Status</th><th>Aksi</th>';
   tbody.innerHTML='';
-  if (!data.length) { tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">${dashFilter==='all'?'Belum ada kendala':'Tidak ada data'}</div></div></td></tr>`; return; }
+  if (!data.length) { tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-text">${dashFilter==='all'?'Belum ada kendala':'Tidak ada data'}</div></div></td></tr>`; return; }
 
   data.forEach((k,i) => {
     const isClear=isKendaraClear(k);
+    const hasSolusi = k.solusi && k.solusi.trim();
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td><span class="tag">#${i+1}</span></td>
       <td>${formatDate(k.tanggal)}</td><td></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--text)"></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--text)"></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${hasSolusi
+          ? `<span style="color:var(--text2);font-size:12px;cursor:pointer" title="${k.solusi.replace(/"/g,'&quot;')}"></span>`
+          : `<span style="color:var(--text3);font-size:12px;font-style:italic">—</span>`
+        }
+      </td>
       <td><div class="check-item"><div class="check-box ${k.vendor?'checked':''}" data-field="vendor">${k.vendor?'✓':''}</div><span>${k.vendor?'Done':'—'}</span></div></td>
       <td><div class="check-item"><div class="check-box ${k.reviewUser?'checked':''}" data-field="reviewUser">${k.reviewUser?'✓':''}</div><span>${k.reviewUser?'Done':'—'}</span></div></td>
       <td>${kendalaStatusBadge(k)}</td>
@@ -2936,6 +2944,11 @@ function renderDashboard() {
     tr.querySelectorAll('td')[2].textContent=k.by;
     tr.querySelectorAll('td')[3].textContent=k.masalah;
     tr.querySelectorAll('td')[3].addEventListener('click',()=>openDetailKendala(k._fsId));
+    if (hasSolusi) {
+      const solusiSpan = tr.querySelectorAll('td')[4].querySelector('span');
+      solusiSpan.textContent = k.solusi;
+      solusiSpan.addEventListener('click',()=>openDetailKendala(k._fsId));
+    }
     tr.querySelectorAll('.check-box').forEach(cb=>cb.addEventListener('click',()=>toggleCheck(k._fsId,cb.dataset.field)));
     tr.querySelectorAll('.btn-sm')[0].addEventListener('click',()=>openDetailKendala(k._fsId));
     tr.querySelectorAll('.btn-sm')[1].addEventListener('click',()=>openEditKendala(k._fsId));
