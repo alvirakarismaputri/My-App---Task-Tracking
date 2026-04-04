@@ -1605,6 +1605,9 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     <div class="nav-item" onclick="showPage('note')">
       <span class="nav-icon">🗒️</span> Note
     </div>
+    <div class="nav-item" onclick="showPage('akun-odoo')">
+      <span class="nav-icon">👤</span> Akun Odoo
+    </div>
   </nav>
   <div style="padding:12px 10px;border-top:1px solid var(--border)" class="sidebar-db-section">
     <div class="nav-label" style="margin-bottom:6px">Database</div>
@@ -1864,6 +1867,68 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     </div>
   </div>
 
+
+  <!-- ============ AKUN ODOO ============ -->
+  <div id="page-akun-odoo" class="page">
+    <div class="topbar">
+      <div class="topbar-hamburger" style="display:none" onclick="openSidebar()">☰</div>
+      <div>
+        <div class="page-title">👤 Akun Odoo</div>
+        <div class="page-sub">Manajemen akun pengguna Odoo</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openModal('modal-akun')">➕ <span class="btn-text">Tambah Akun</span></button>
+      </div>
+    </div>
+    <div class="page-content">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+        <div style="position:relative;flex:1;min-width:180px;max-width:260px">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text3);pointer-events:none">🔍</span>
+          <input type="text" id="akun-search" placeholder="Cari nama / email..." oninput="renderAkun()"
+            style="width:100%;padding:7px 12px 7px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <select id="akun-filter-dept" onchange="onAkunDeptFilterChange()" class="form-select" style="width:auto;min-width:160px;padding:7px 12px">
+          <option value="">Semua Department</option>
+          <option value="Direksi">Direksi</option>
+          <option value="HRGA">HRGA</option>
+          <option value="Keuangan &amp; Umum">Keuangan &amp; Umum</option>
+          <option value="Logistik Pusat &amp; Ekspedisi">Logistik Pusat &amp; Ekspedisi</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Branding &amp; Retail">Branding &amp; Retail</option>
+        </select>
+        <select id="akun-filter-jabatan" onchange="renderAkun()" class="form-select" style="width:auto;min-width:160px;padding:7px 12px">
+          <option value="">Semua Jabatan</option>
+        </select>
+        <select id="akun-filter-company" onchange="renderAkun()" class="form-select" style="width:auto;min-width:120px;padding:7px 12px">
+          <option value="">Semua Company</option>
+          <option value="SM">SM</option>
+          <option value="SJ">SJ</option>
+        </select>
+        <button class="btn btn-sm" onclick="resetAkunFilter()">🔄 Reset</button>
+        <span class="tag" id="akun-count" style="margin-left:auto">0 akun</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortAkun('nama')" style="cursor:pointer;user-select:none">Nama <span id="sort-icon-nama" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('email')" style="cursor:pointer;user-select:none">Email <span id="sort-icon-email" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th>Password</th>
+              <th onclick="sortAkun('jabatan')" style="cursor:pointer;user-select:none">Jabatan <span id="sort-icon-jabatan" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('department')" style="cursor:pointer;user-select:none">Department <span id="sort-icon-department" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('company')" style="cursor:pointer;user-select:none">Company <span id="sort-icon-company" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="akun-tbody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">Belum ada data akun</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div><!-- end main -->
 
 <!-- ============ MODALS ============ -->
@@ -2105,6 +2170,69 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
   </div>
 </div>
 
+<!-- MODAL AKUN ODOO -->
+<div class="modal-overlay" id="modal-akun">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modal-akun-icon">👤</span>
+      <span class="modal-title" id="modal-akun-title">Tambah Akun Odoo</span>
+      <button class="modal-close" onclick="closeModal('modal-akun')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="akun-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nama *</label>
+        <input type="text" class="form-input" id="akun-nama" placeholder="Nama lengkap pengguna">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-input" id="akun-email" placeholder="email@contoh.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <div style="position:relative">
+            <input type="password" class="form-input" id="akun-password" placeholder="••••••••" style="padding-right:40px">
+            <button type="button" onclick="toggleAkunPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px" id="akun-pass-eye">👁</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Company *</label>
+          <select class="form-select" id="akun-company">
+            <option value="">-- Pilih Company --</option>
+            <option value="SM">SM</option>
+            <option value="SJ">SJ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          <select class="form-select" id="akun-department" onchange="onAkunDeptChange()">
+            <option value="">-- Pilih Department --</option>
+            <option value="Direksi">Direksi</option>
+            <option value="HRGA">HRGA</option>
+            <option value="Keuangan & Umum">Keuangan & Umum</option>
+            <option value="Logistik Pusat & Ekspedisi">Logistik Pusat & Ekspedisi</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Branding & Retail">Branding & Retail</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jabatan *</label>
+        <select class="form-select" id="akun-jabatan">
+          <option value="">-- Pilih Department dulu --</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-akun')">Batal</button>
+      <button class="btn btn-primary" onclick="saveAkun()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Elegant Confirm Dialog -->
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-dialog">
@@ -2171,11 +2299,13 @@ const ALLOWED_EMAILS = []; // [] = semua boleh, isi email untuk whitelist
 // ========================
 // DB STATE
 // ========================
+let _akunEditId = null;
 let DB = {
   kendala: [],
   request: [],
   report: [],
-  note: []
+  note: [],
+  akun_odoo: []
 };
 
 // Show loading overlay
@@ -2221,7 +2351,7 @@ async function fsGetAll(colName) {
 // REALTIME LISTENERS
 // ========================
 function setupListeners() {
-  ['kendala','request','report','note'].forEach(col => {
+  ['kendala','request','report','note','akun_odoo'].forEach(col => {
     onSnapshot(collection(db, col), snap => {
       DB[col] = snap.docs.map(d => ({ ...d.data(), _fsId: d.id }));
       // Sort by createdAt desc
@@ -2440,6 +2570,19 @@ function openModal(id) {
   if (id === 'modal-request') { openAddRequest(); return; }
   if (id === 'modal-report')  { openAddReport();  return; }
   if (id === 'modal-note')    { openAddNote();    return; }
+  if (id === 'modal-akun') {
+    _akunEditId = null;
+    document.getElementById('akun-nama').value = '';
+    document.getElementById('akun-email').value = '';
+    document.getElementById('akun-password').value = '';
+    document.getElementById('akun-password').type = 'password';
+    document.getElementById('akun-pass-eye').textContent = '👁';
+    document.getElementById('akun-company').value = '';
+    document.getElementById('akun-department').value = '';
+    document.getElementById('akun-jabatan').innerHTML = '<option value="">-- Pilih Department dulu --</option>';
+    document.getElementById('modal-akun-title').textContent = 'Tambah Akun Odoo';
+    document.getElementById('modal-akun-icon').textContent = '👤';
+  }
   showModal(id);
 }
 function closeModal(id) { hideModal(id); }
@@ -3003,6 +3146,7 @@ function renderAll() {
   renderRequestTable();
   renderReportTable();
   renderNoteGrid();
+  renderAkun();
   updateBadges();
 }
 
@@ -3231,6 +3375,231 @@ function updateBadges() {
 }
 
 // ========================
+// AKUN ODOO
+// ========================
+const JABATAN_MAP = {
+  'Direksi': ['General Manager'],
+  'Marketing': ['Manager','Wakil Manager','Kasir','SPG/SPB','Admin Telemarketing','Checker','Koordinator Logistik Toko','Helper','Koordinator Penjualan','Sales Keliling','Admin Logistik Toko','Koordinator Kasir','Helper Display','Helper Logistik Toko','Checker Display','Checker In Logistik Toko'],
+  'HRGA': ['Staff HR','Staff GA','Teknisi General'],
+  'Branding & Retail': ['Admin Penjualan Online','Staff Medsos','Manager'],
+  'Logistik Pusat & Ekspedisi': ['Manager','Wakil Manager','Koordinator Logistik Pusat','Admin Logistik Pusat','Helper Logistik Pusat','Teknisi Produk','Profiler Product','Sopir'],
+  'Keuangan & Umum': ['Manager','Wakil Manager','Admin Penjualan & Piutang','Admin Hutang','Admin Pembelian','Staff Accounting','Staff Finance & Tax','Admin Stock','Admin Perbantuan','Staff IT']
+};
+
+function onAkunDeptChange() {
+  const dept = document.getElementById('akun-department').value;
+  const jabEl = document.getElementById('akun-jabatan');
+  jabEl.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
+  if (dept && JABATAN_MAP[dept]) {
+    JABATAN_MAP[dept].forEach(j => {
+      const o = document.createElement('option');
+      o.value = j; o.textContent = j; jabEl.appendChild(o);
+    });
+  } else {
+    jabEl.innerHTML = '<option value="">-- Pilih Department dulu --</option>';
+  }
+}
+
+function onAkunDeptFilterChange() {
+  const dept = document.getElementById('akun-filter-dept').value;
+  const jabEl = document.getElementById('akun-filter-jabatan');
+  const prevVal = jabEl.value;
+  jabEl.innerHTML = '<option value="">Semua Jabatan</option>';
+  const list = dept ? (JABATAN_MAP[dept] || []) :
+    [...new Set(Object.values(JABATAN_MAP).flat())].sort();
+  list.forEach(j => {
+    const o = document.createElement('option');
+    o.value = j; o.textContent = j; jabEl.appendChild(o);
+  });
+  jabEl.value = list.includes(prevVal) ? prevVal : '';
+  renderAkun();
+}
+
+function resetAkunFilter() {
+  document.getElementById('akun-search').value = '';
+  document.getElementById('akun-filter-dept').value = '';
+  document.getElementById('akun-filter-company').value = '';
+  document.getElementById('akun-filter-jabatan').innerHTML = '<option value="">Semua Jabatan</option>';
+  renderAkun();
+}
+
+function toggleAkunPass() {
+  const inp = document.getElementById('akun-password');
+  const eye = document.getElementById('akun-pass-eye');
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+  else { inp.type = 'password'; eye.textContent = '👁'; }
+}
+
+function togglePassView(id) {
+  const mask = document.getElementById('pmask-' + id);
+  const text = document.getElementById('ptext-' + id);
+  const btn  = document.getElementById('peye-' + id);
+  if (!mask || !text) return;
+  const showing = text.style.display !== 'none';
+  mask.style.display = showing ? '' : 'none';
+  text.style.display = showing ? 'none' : '';
+  if (btn) btn.textContent = showing ? '👁' : '🙈';
+}
+
+function copyPass(id) {
+  const akun = (DB.akun_odoo || []).find(a => a._fsId === id);
+  if (!akun) return;
+  navigator.clipboard.writeText(akun.password || '')
+    .then(() => showToast('📋 Password disalin!'));
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function saveAkun() {
+  const nama       = document.getElementById('akun-nama').value.trim();
+  const email      = document.getElementById('akun-email').value.trim();
+  const password   = document.getElementById('akun-password').value.trim();
+  const company    = document.getElementById('akun-company').value;
+  const department = document.getElementById('akun-department').value;
+  const jabatan    = document.getElementById('akun-jabatan').value;
+  if (!nama || !email || !password || !company || !department || !jabatan) {
+    showToast('⚠️ Semua field wajib diisi', 'error'); return;
+  }
+  const data = { nama, email, password, company, department, jabatan, createdAt: Date.now() };
+  try {
+    if (_akunEditId) {
+      await fsSet('akun_odoo', _akunEditId, data);
+      showToast('✅ Akun berhasil diperbarui');
+    } else {
+      await fsAdd('akun_odoo', data);
+      showToast('✅ Akun berhasil ditambahkan');
+    }
+    closeModal('modal-akun');
+  } catch(e) {
+    showToast('❌ Gagal menyimpan: ' + e.message, 'error');
+  }
+}
+
+async function editAkun(id) {
+  const akun = (DB.akun_odoo || []).find(a => a._fsId === id);
+  if (!akun) return;
+  _akunEditId = id;
+  document.getElementById('modal-akun-title').textContent = 'Edit Akun Odoo';
+  document.getElementById('modal-akun-icon').textContent = '✏️';
+  document.getElementById('akun-nama').value = akun.nama || '';
+  document.getElementById('akun-email').value = akun.email || '';
+  document.getElementById('akun-password').value = akun.password || '';
+  document.getElementById('akun-password').type = 'password';
+  document.getElementById('akun-pass-eye').textContent = '👁';
+  document.getElementById('akun-company').value = akun.company || '';
+  document.getElementById('akun-department').value = akun.department || '';
+  onAkunDeptChange();
+  document.getElementById('akun-jabatan').value = akun.jabatan || '';
+  showModal('modal-akun');
+}
+
+async function deleteAkun(id) {
+  const akun = (DB.akun_odoo || []).find(a => a._fsId === id);
+  const ok = await elegantConfirm({
+    title: 'Hapus Akun?',
+    message: `Akun "${akun?.nama || akun?.email}" akan dihapus permanen.`,
+    icon: '🗑️', type: 'danger', okLabel: 'Hapus'
+  });
+  if (!ok) return;
+  try {
+    await fsDel('akun_odoo', id);
+    showToast('🗑️ Akun dihapus');
+  } catch(e) {
+    showToast('❌ Gagal hapus: ' + e.message, 'error');
+  }
+}
+
+let akunSortCol = '';
+let akunSortAsc = true;
+
+function sortAkun(col) {
+  if (akunSortCol === col) {
+    akunSortAsc = !akunSortAsc;
+  } else {
+    akunSortCol = col;
+    akunSortAsc = true;
+  }
+  // Update all sort icons
+  ['nama','email','jabatan','department','company'].forEach(c => {
+    const el = document.getElementById('sort-icon-' + c);
+    if (!el) return;
+    if (c === akunSortCol) {
+      el.textContent = akunSortAsc ? '↑' : '↓';
+      el.style.color = 'var(--primary-light)';
+    } else {
+      el.textContent = '⇅';
+      el.style.color = 'var(--text3)';
+    }
+  });
+  renderAkun();
+}
+
+function renderAkun() {
+  const tbody = document.getElementById('akun-tbody');
+  if (!tbody) return;
+
+  const q        = (document.getElementById('akun-search')?.value || '').toLowerCase();
+  const fDept    = document.getElementById('akun-filter-dept')?.value || '';
+  const fJabatan = document.getElementById('akun-filter-jabatan')?.value || '';
+  const fCompany = document.getElementById('akun-filter-company')?.value || '';
+
+  let list = (DB.akun_odoo || []).filter(a => {
+    if (fDept    && a.department !== fDept)    return false;
+    if (fJabatan && a.jabatan    !== fJabatan) return false;
+    if (fCompany && a.company    !== fCompany) return false;
+    if (q) {
+      const hay = [a.nama, a.email, a.jabatan, a.department].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (akunSortCol) {
+    list.sort((a, b) => {
+      const va = (a[akunSortCol] || '').toLowerCase();
+      const vb = (b[akunSortCol] || '').toLowerCase();
+      if (va < vb) return akunSortAsc ? -1 : 1;
+      if (va > vb) return akunSortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  const countEl = document.getElementById('akun-count');
+  if (countEl) countEl.textContent = list.length + ' akun';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">${q||fDept||fJabatan||fCompany?'🔍 Tidak ada hasil':'Belum ada data akun'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(a => `
+    <tr>
+      <td style="font-weight:600">${escHtml(a.nama||'-')}</td>
+      <td style="font-family:var(--mono);font-size:12px">${escHtml(a.email||'-')}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span id="pmask-${a._fsId}" style="font-family:var(--mono);letter-spacing:2px;color:var(--text3)">••••••••</span>
+          <span id="ptext-${a._fsId}" style="font-family:var(--mono);font-size:12px;display:none">${escHtml(a.password||'')}</span>
+          <button class="btn btn-sm btn-icon" onclick="togglePassView('${a._fsId}')" id="peye-${a._fsId}" title="Lihat/Sembunyikan">👁</button>
+          <button class="btn btn-sm btn-icon" onclick="copyPass('${a._fsId}')" title="Copy">📋</button>
+        </div>
+      </td>
+      <td><span class="badge badge-purple">${escHtml(a.jabatan||'-')}</span></td>
+      <td><span class="badge badge-blue">${escHtml(a.department||'-')}</span></td>
+      <td><span class="badge badge-green">${escHtml(a.company||'-')}</span></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm btn-success" onclick="editAkun('${a._fsId}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteAkun('${a._fsId}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ========================
 // CALENDAR
 // ========================
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
@@ -3379,6 +3748,7 @@ window.confirmResolve=confirmResolve;
 window.closeZoom=closeZoom;
 window.exportDB=exportDB; window.importDB=importDB;
 window.setNoteFilter=setNoteFilter; window.setNoteColor=setNoteColor;
+window.openAddNote=openAddNote; window.openEditNote=openEditNote;
 window.addReportItem=addReportItem;
 window.saveKendala=saveKendala; window.saveRequest=saveRequest; window.saveReport=saveReport; window.saveNote=saveNote;
 window.handleImgInput=handleImgInput;
@@ -3388,6 +3758,11 @@ window.openWAModal=openWAModal;
 window.renderDashboard=renderDashboard;
 window.zoomPrev=zoomPrev;
 window.zoomNext=zoomNext;
+window.saveAkun=saveAkun; window.editAkun=editAkun; window.deleteAkun=deleteAkun;
+window.renderAkun=renderAkun; window.copyPass=copyPass; window.togglePassView=togglePassView;
+window.onAkunDeptChange=onAkunDeptChange; window.onAkunDeptFilterChange=onAkunDeptFilterChange;
+window.toggleAkunPass=toggleAkunPass; window.resetAkunFilter=resetAkunFilter;
+window.sortAkun=sortAkun;
 
 // ========================
 // INIT
@@ -3422,6 +3797,10 @@ window.zoomNext=zoomNext;
     <div class="mobile-nav-item" id="mnav-note" onclick="showPage('note');setMobileNav('note')">
       <span class="mobile-nav-icon">🗒️</span>
       <span>Note</span>
+    </div>
+    <div class="mobile-nav-item" id="mnav-akun-odoo" onclick="showPage('akun-odoo');setMobileNav('akun-odoo')">
+      <span class="mobile-nav-icon">👤</span>
+      <span>Akun</span>
     </div>
   </div>
 </nav>
