@@ -1906,24 +1906,30 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
           <option value="SJ">SJ</option>
           <option value="SJ & SM">SJ &amp; SM</option>
         </select>
+        <select id="akun-filter-status" onchange="renderAkun()" class="form-select" style="width:auto;min-width:130px;padding:7px 12px">
+          <option value="">Semua Status</option>
+          <option value="aktif">✅ Aktif</option>
+          <option value="nonaktif">⛔ Nonaktif</option>
+        </select>
         <button class="btn btn-sm" onclick="resetAkunFilter()">🔄 Reset</button>
         <span class="tag" id="akun-count" style="margin-left:auto">0 akun</span>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap" style="overflow-x:auto">
+        <table style="table-layout:fixed;min-width:900px">
           <thead>
             <tr>
-              <th onclick="sortAkun('nama')" style="cursor:pointer;user-select:none">Nama <span id="sort-icon-nama" style="color:var(--text3);font-size:11px">⇅</span></th>
-              <th onclick="sortAkun('email')" style="cursor:pointer;user-select:none">Email <span id="sort-icon-email" style="color:var(--text3);font-size:11px">⇅</span></th>
-              <th>Password</th>
-              <th onclick="sortAkun('jabatan')" style="cursor:pointer;user-select:none">Jabatan <span id="sort-icon-jabatan" style="color:var(--text3);font-size:11px">⇅</span></th>
-              <th onclick="sortAkun('department')" style="cursor:pointer;user-select:none">Department <span id="sort-icon-department" style="color:var(--text3);font-size:11px">⇅</span></th>
-              <th onclick="sortAkun('company')" style="cursor:pointer;user-select:none">Company <span id="sort-icon-company" style="color:var(--text3);font-size:11px">⇅</span></th>
-              <th>Aksi</th>
+              <th onclick="sortAkun('nama')" style="cursor:pointer;user-select:none;width:150px">Nama <span id="sort-icon-nama" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('email')" style="cursor:pointer;user-select:none;width:170px">Email <span id="sort-icon-email" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th style="width:130px">Password</th>
+              <th onclick="sortAkun('jabatan')" style="cursor:pointer;user-select:none;width:150px">Jabatan <span id="sort-icon-jabatan" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('department')" style="cursor:pointer;user-select:none;width:150px">Department <span id="sort-icon-department" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('company')" style="cursor:pointer;user-select:none;width:90px">Company <span id="sort-icon-company" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th onclick="sortAkun('aktif')" style="cursor:pointer;user-select:none;text-align:center;width:70px">Status <span id="sort-icon-aktif" style="color:var(--text3);font-size:11px">⇅</span></th>
+              <th style="width:80px">Aksi</th>
             </tr>
           </thead>
           <tbody id="akun-tbody">
-            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">Belum ada data akun</td></tr>
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">Belum ada data akun</td></tr>
           </tbody>
         </table>
       </div>
@@ -2226,6 +2232,10 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
         <select class="form-select" id="akun-jabatan">
           <option value="">-- Pilih Department dulu --</option>
         </select>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="akun-aktif" checked style="width:16px;height:16px;cursor:pointer;accent-color:var(--green)">
+        <label for="akun-aktif" style="font-size:13px;font-weight:500;cursor:pointer;color:var(--text)">Akun Aktif</label>
       </div>
     </div>
     <div class="modal-footer">
@@ -3422,6 +3432,12 @@ function resetAkunFilter() {
   document.getElementById('akun-filter-dept').value = '';
   document.getElementById('akun-filter-company').value = '';
   document.getElementById('akun-filter-jabatan').innerHTML = '<option value="">Semua Jabatan</option>';
+  document.getElementById('akun-filter-status').value = '';
+  akunSortCol = ''; akunSortAsc = true;
+  ['nama','email','jabatan','department','company','aktif'].forEach(c => {
+    const el = document.getElementById('sort-icon-' + c);
+    if (el) { el.textContent = '⇅'; el.style.color = 'var(--text3)'; }
+  });
   renderAkun();
 }
 
@@ -3464,7 +3480,8 @@ async function saveAkun() {
   if (!nama || !email || !password || !company || !department || !jabatan) {
     showToast('⚠️ Semua field wajib diisi', 'error'); return;
   }
-  const data = { nama, email, password, company, department, jabatan, createdAt: Date.now() };
+  const aktif = document.getElementById('akun-aktif').checked;
+  const data = { nama, email, password, company, department, jabatan, aktif, createdAt: Date.now() };
   try {
     if (_akunEditId) {
       await fsSet('akun_odoo', _akunEditId, data);
@@ -3494,6 +3511,7 @@ async function editAkun(id) {
   document.getElementById('akun-department').value = akun.department || '';
   onAkunDeptChange();
   document.getElementById('akun-jabatan').value = akun.jabatan || '';
+  document.getElementById('akun-aktif').checked = akun.aktif !== false;
   showModal('modal-akun');
 }
 
@@ -3513,6 +3531,17 @@ async function deleteAkun(id) {
   }
 }
 
+async function toggleAkunAktif(id, aktif) {
+  const akun = (DB.akun_odoo || []).find(a => a._fsId === id);
+  if (!akun) return;
+  try {
+    await fsSet('akun_odoo', id, { ...akun, aktif });
+    showToast(aktif ? '✅ Akun diaktifkan' : '⛔ Akun dinonaktifkan');
+  } catch(e) {
+    showToast('❌ Gagal update: ' + e.message, 'error');
+  }
+}
+
 let akunSortCol = '';
 let akunSortAsc = true;
 
@@ -3524,7 +3553,7 @@ function sortAkun(col) {
     akunSortAsc = true;
   }
   // Update all sort icons
-  ['nama','email','jabatan','department','company'].forEach(c => {
+  ['nama','email','jabatan','department','company','aktif'].forEach(c => {
     const el = document.getElementById('sort-icon-' + c);
     if (!el) return;
     if (c === akunSortCol) {
@@ -3546,11 +3575,14 @@ function renderAkun() {
   const fDept    = document.getElementById('akun-filter-dept')?.value || '';
   const fJabatan = document.getElementById('akun-filter-jabatan')?.value || '';
   const fCompany = document.getElementById('akun-filter-company')?.value || '';
+  const fStatus  = document.getElementById('akun-filter-status')?.value || '';
 
   let list = (DB.akun_odoo || []).filter(a => {
     if (fDept    && a.department !== fDept)    return false;
     if (fJabatan && a.jabatan    !== fJabatan) return false;
     if (fCompany && a.company    !== fCompany) return false;
+    if (fStatus === 'aktif'    && a.aktif === false) return false;
+    if (fStatus === 'nonaktif' && a.aktif !== false)  return false;
     if (q) {
       const hay = [a.nama, a.email, a.jabatan, a.department].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
@@ -3560,6 +3592,11 @@ function renderAkun() {
 
   if (akunSortCol) {
     list.sort((a, b) => {
+      if (akunSortCol === 'aktif') {
+        const va = a.aktif !== false ? 1 : 0;
+        const vb = b.aktif !== false ? 1 : 0;
+        return akunSortAsc ? vb - va : va - vb;
+      }
       const va = (a[akunSortCol] || '').toLowerCase();
       const vb = (b[akunSortCol] || '').toLowerCase();
       if (va < vb) return akunSortAsc ? -1 : 1;
@@ -3572,25 +3609,29 @@ function renderAkun() {
   if (countEl) countEl.textContent = list.length + ' akun';
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">${q||fDept||fJabatan||fCompany?'🔍 Tidak ada hasil':'Belum ada data akun'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">${q||fDept||fJabatan||fCompany?'🔍 Tidak ada hasil':'Belum ada data akun'}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = list.map(a => `
     <tr>
-      <td style="font-weight:600">${escHtml(a.nama||'-')}</td>
-      <td style="font-family:var(--mono);font-size:12px">${escHtml(a.email||'-')}</td>
-      <td>
+      <td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.nama||'-')}">${escHtml(a.nama||'-')}</td>
+      <td style="font-family:var(--mono);font-size:12px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.email||'-')}">${escHtml(a.email||'-')}</td>
+      <td style="max-width:130px">
         <div style="display:flex;align-items:center;gap:5px">
-          <span id="pmask-${a._fsId}" style="font-family:var(--mono);letter-spacing:2px;color:var(--text3)">••••••••</span>
-          <span id="ptext-${a._fsId}" style="font-family:var(--mono);font-size:12px;display:none">${escHtml(a.password||'')}</span>
+          <span id="pmask-${a._fsId}" style="font-family:var(--mono);letter-spacing:2px;color:var(--text3)">••••••</span>
+          <span id="ptext-${a._fsId}" style="font-family:var(--mono);font-size:12px;display:none;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.password||'')}">${escHtml(a.password||'')}</span>
           <button class="btn btn-sm btn-icon" onclick="togglePassView('${a._fsId}')" id="peye-${a._fsId}" title="Lihat/Sembunyikan">👁</button>
           <button class="btn btn-sm btn-icon" onclick="copyPass('${a._fsId}')" title="Copy">📋</button>
         </div>
       </td>
-      <td><span class="badge badge-purple">${escHtml(a.jabatan||'-')}</span></td>
-      <td><span class="badge badge-blue">${escHtml(a.department||'-')}</span></td>
-      <td><span class="badge badge-green">${escHtml(a.company||'-')}</span></td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.jabatan||'-')}"><span class="badge badge-purple" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">${escHtml(a.jabatan||'-')}</span></td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.department||'-')}"><span class="badge badge-blue" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">${escHtml(a.department||'-')}</span></td>
+      <td style="max-width:90px"><span class="badge badge-green">${escHtml(a.company||'-')}</span></td>
+      <td style="text-align:center">
+        <input type="checkbox" ${a.aktif!==false?'checked':''} onchange="toggleAkunAktif('${a._fsId}',this.checked)"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--green)">
+      </td>
       <td>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm btn-success" onclick="editAkun('${a._fsId}')">✏️</button>
@@ -3765,6 +3806,7 @@ window.renderAkun=renderAkun; window.copyPass=copyPass; window.togglePassView=to
 window.onAkunDeptChange=onAkunDeptChange; window.onAkunDeptFilterChange=onAkunDeptFilterChange;
 window.toggleAkunPass=toggleAkunPass; window.resetAkunFilter=resetAkunFilter;
 window.sortAkun=sortAkun;
+window.toggleAkunAktif=toggleAkunAktif;
 
 // ========================
 // INIT
