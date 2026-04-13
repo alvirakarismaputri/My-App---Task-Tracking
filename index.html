@@ -1602,6 +1602,10 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     <div class="nav-item" onclick="showPage('calendar')">
       <span class="nav-icon">📅</span> Kalender
     </div>
+    <div class="nav-item" onclick="showPage('faktur-pajak')">
+      <span class="nav-icon">🧾</span> Faktur Pajak
+      <span class="nav-badge" id="badge-faktur" style="display:none">0</span>
+    </div>
     <div class="nav-item" onclick="showPage('note')">
       <span class="nav-icon">🗒️</span> Note
     </div>
@@ -1867,6 +1871,50 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     </div>
   </div>
 
+
+  <!-- ============ FAKTUR PAJAK ============ -->
+  <div id="page-faktur-pajak" class="page">
+    <div class="topbar">
+      <div class="topbar-hamburger" style="display:none" onclick="openSidebar()">☰</div>
+      <div>
+        <div class="page-title">🧾 Belum Ada Faktur Pajak</div>
+        <div class="page-sub">Tracking invoice vendor yang belum ada faktur pajaknya</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openAddFaktur()">➕ <span class="btn-text">Tambah Data</span></button>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="section-header">
+        <span class="section-title">🧾 Daftar Invoice Belum Ada Faktur Pajak</span>
+        <span class="tag" id="faktur-count">0 item</span>
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          <div style="position:relative">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;color:var(--text3)">🔍</span>
+            <input type="text" id="faktur-search" placeholder="Cari vendor / no invoice..." oninput="renderFakturTable()"
+              style="padding:6px 12px 6px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);outline:none;width:220px;transition:border-color 0.15s;"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tgl Vendor</th>
+              <th>No Invoice</th>
+              <th>Keterangan</th>
+              <th>Gambar Invoice</th>
+              <th>PDF Faktur</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="faktur-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ AKUN ODOO ============ -->
   <div id="page-akun-odoo" class="page">
@@ -2177,6 +2225,114 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
   </div>
 </div>
 
+<!-- Modal: Detail Faktur Pajak -->
+<div class="modal-overlay" id="modal-detail-faktur">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span>🧾</span>
+      <div class="modal-title">Detail Faktur Pajak</div>
+      <button class="modal-close" onclick="closeModal('modal-detail-faktur')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-detail-faktur-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-detail-faktur')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: PDF Viewer -->
+<div class="modal-overlay" id="modal-pdf-viewer" style="z-index:2000">
+  <div class="modal" style="width:90vw;max-width:960px;height:90vh;max-height:90vh">
+    <div class="modal-header" style="flex-shrink:0">
+      <span>📄</span>
+      <div class="modal-title" id="pdf-viewer-title" style="max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Preview PDF</div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary btn-sm" id="pdf-viewer-download-btn">📥 Download</button>
+        <button class="modal-close" onclick="closePdfViewer()">✕</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow:hidden;background:#1a1a1a;position:relative">
+      <iframe id="pdf-viewer-iframe" style="width:100%;height:100%;border:none;display:block" title="PDF Preview"></iframe>
+      <div id="pdf-viewer-fallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:var(--surface2)">
+        <div style="font-size:48px">📄</div>
+        <div style="font-size:14px;color:var(--text2);text-align:center">Browser tidak mendukung preview PDF langsung.<br>Silakan download untuk membuka file.</div>
+        <button class="btn btn-primary" id="pdf-fallback-download-btn">📥 Download PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Faktur Pajak Form -->
+<div class="modal-overlay" id="modal-faktur">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span>🧾</span>
+      <div class="modal-title" id="modal-faktur-title">Tambah Data Faktur Pajak</div>
+      <button class="modal-close" onclick="closeModal('modal-faktur')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="faktur-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal Vendor *</label>
+          <input type="date" class="form-input" id="faktur-tanggal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">No Invoice *</label>
+          <input type="text" class="form-input" id="faktur-no-invoice" placeholder="Contoh: INV/2025/001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nama Vendor</label>
+        <input type="text" class="form-input" id="faktur-vendor" placeholder="Nama vendor / supplier...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <textarea class="form-textarea" id="faktur-keterangan" placeholder="Keterangan tambahan tentang invoice ini..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gambar Invoice</label>
+        <div class="img-upload-area" id="faktur-img-drop-area" onclick="document.getElementById('faktur-img-input').click()" style="position:relative">
+          <input type="file" id="faktur-img-input" accept="image/*" multiple style="display:none" onchange="handleFakturImgInput(this)">
+          <div class="img-upload-icon">🖼️</div>
+          <div class="img-upload-text">Klik, drag & drop, atau paste gambar</div>
+          <div class="img-upload-hint">Multiple gambar · JPG, PNG, WebP · Ctrl+V untuk paste screenshot</div>
+        </div>
+        <div class="img-preview-grid" id="faktur-img-preview"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload PDF Faktur Pajak</label>
+        <div id="faktur-pdf-upload-area" class="img-upload-area" onclick="document.getElementById('faktur-pdf-input').click()" style="border-color:var(--blue);padding:20px">
+          <input type="file" id="faktur-pdf-input" accept=".pdf" style="display:none" onchange="handleFakturPdfInput(this)">
+          <div class="img-upload-icon">📄</div>
+          <div class="img-upload-text">Klik atau drag & drop file PDF</div>
+          <div class="img-upload-hint">Format: PDF · Maks 10MB · Drag file PDF ke sini</div>
+        </div>
+        <div id="faktur-pdf-preview" style="display:none;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;align-items:center;gap:10px">
+          <span style="font-size:24px">📄</span>
+          <div style="flex:1;min-width:0">
+            <div id="faktur-pdf-name" style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+            <div id="faktur-pdf-size" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="removeFakturPdf()">✕ Hapus</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="faktur-status">
+          <option value="Belum Ada">❌ Belum Ada Faktur</option>
+          <option value="Sudah Ada">✅ Sudah Ada Faktur</option>
+          <option value="Dalam Proses">🔄 Dalam Proses</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-faktur')">Batal</button>
+      <button class="btn btn-primary" onclick="saveFaktur()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL AKUN ODOO -->
 <div class="modal-overlay" id="modal-akun">
   <div class="modal">
@@ -2317,7 +2473,8 @@ let DB = {
   request: [],
   report: [],
   note: [],
-  akun_odoo: []
+  akun_odoo: [],
+  faktur: []
 };
 
 // Show loading overlay
@@ -2363,7 +2520,7 @@ async function fsGetAll(colName) {
 // REALTIME LISTENERS
 // ========================
 function setupListeners() {
-  ['kendala','request','report','note','akun_odoo'].forEach(col => {
+  ['kendala','request','report','note','akun_odoo','faktur'].forEach(col => {
     onSnapshot(collection(db, col), snap => {
       DB[col] = snap.docs.map(d => ({ ...d.data(), _fsId: d.id }));
       // Sort by createdAt desc
@@ -2554,6 +2711,7 @@ function loadLocalDB() {
       DB.request = d.request || [];
       DB.report  = d.report  || [];
       DB.note    = d.note    || [];
+      DB.faktur  = d.faktur  || [];
     } catch(e) {}
   }
 }
@@ -2582,6 +2740,7 @@ function openModal(id) {
   if (id === 'modal-request') { openAddRequest(); return; }
   if (id === 'modal-report')  { openAddReport();  return; }
   if (id === 'modal-note')    { openAddNote();    return; }
+  if (id === 'modal-faktur')  { openAddFaktur();  return; }
   if (id === 'modal-akun') {
     _akunEditId = null;
     document.getElementById('akun-nama').value = '';
@@ -3132,7 +3291,7 @@ async function importDB(input) {
       if (!ok) { input.value=''; return; }
       showLoading('Mengimport data ke Firebase...');
       // Delete all existing then re-add
-      for (const col of ['kendala','request','report','note']) {
+      for (const col of ['kendala','request','report','note','faktur']) {
         const existing = await fsGetAll(col);
         for (const item of existing) await fsDel(col, item._fsId);
         for (const item of (data[col]||[])) {
@@ -3158,6 +3317,7 @@ function renderAll() {
   renderRequestTable();
   renderReportTable();
   renderNoteGrid();
+  renderFakturTable();
   renderAkun();
   updateBadges();
 }
@@ -3770,6 +3930,403 @@ function today(){return new Date().toISOString().slice(0,10);}
 function formatDate(d){if(!d)return'-';const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}
 
 // ========================
+// FAKTUR PAJAK
+// ========================
+let tempFakturImages = [];
+let tempFakturPdfData = null; // {name, size, data (base64)}
+
+// ---- Helpers ----
+function _readFakturImageFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  const r = new FileReader();
+  r.onload = e => { tempFakturImages.push(e.target.result); renderFakturImgPreview(); };
+  r.readAsDataURL(file);
+}
+
+function _readFakturPdfFile(file) {
+  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) { toast('File harus berformat PDF!', 'error'); return; }
+  if (file.size > 10 * 1024 * 1024) { toast('PDF terlalu besar (maks 10MB)', 'error'); return; }
+  const r = new FileReader();
+  r.onload = e => { tempFakturPdfData = { name: file.name, size: file.size, data: e.target.result }; renderFakturPdfPreview(); };
+  r.readAsDataURL(file);
+}
+
+function _setDropActive(el, active) {
+  if (active) { el.style.borderColor = 'var(--primary)'; el.style.background = 'var(--primary-dim)'; }
+  else { el.style.borderColor = ''; el.style.background = ''; }
+}
+
+// ---- Input handler (file picker) ----
+function handleFakturImgInput(input) {
+  for (const f of input.files) _readFakturImageFile(f);
+  input.value = '';
+}
+
+function handleFakturPdfInput(input) {
+  const file = input.files[0]; if (!file) return;
+  _readFakturPdfFile(file);
+  input.value = '';
+}
+
+// ---- Render previews ----
+function renderFakturImgPreview() {
+  const grid = document.getElementById('faktur-img-preview');
+  grid.innerHTML = '';
+  tempFakturImages.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'img-preview-item';
+    const img = document.createElement('img');
+    img.src = src; img.style.cursor = 'zoom-in';
+    img.addEventListener('click', e => { e.stopPropagation(); zoomImg(src, tempFakturImages, i); });
+    const rem = document.createElement('div');
+    rem.className = 'img-remove'; rem.textContent = 'X';
+    rem.addEventListener('click', e => { e.stopPropagation(); tempFakturImages.splice(i,1); renderFakturImgPreview(); });
+    div.appendChild(img); div.appendChild(rem);
+    grid.appendChild(div);
+  });
+}
+
+function renderFakturPdfPreview() {
+  const preview = document.getElementById('faktur-pdf-preview');
+  const uploadArea = document.getElementById('faktur-pdf-upload-area');
+  if (tempFakturPdfData) {
+    preview.style.display = 'flex';
+    uploadArea.style.display = 'none';
+    document.getElementById('faktur-pdf-name').textContent = tempFakturPdfData.name;
+    const kb = (tempFakturPdfData.size / 1024).toFixed(1);
+    const mb = (tempFakturPdfData.size / 1024 / 1024).toFixed(2);
+    document.getElementById('faktur-pdf-size').textContent = tempFakturPdfData.size > 1024*1024 ? `${mb} MB` : `${kb} KB`;
+  } else {
+    preview.style.display = 'none';
+    uploadArea.style.display = 'block';
+  }
+}
+
+function removeFakturPdf() { tempFakturPdfData = null; renderFakturPdfPreview(); }
+
+// ---- Setup drag & drop + paste (called when modal opens) ----
+function setupFakturDragDrop() {
+  // --- IMAGE DROP AREA ---
+  const imgArea = document.getElementById('faktur-img-drop-area');
+  if (imgArea && !imgArea._ddReady) {
+    imgArea._ddReady = true;
+
+    imgArea.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); _setDropActive(imgArea, true); });
+    imgArea.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); _setDropActive(imgArea, false); });
+    imgArea.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      _setDropActive(imgArea, false);
+      const items = [...(e.dataTransfer.files || [])];
+      items.forEach(f => { if (f.type.startsWith('image/')) _readFakturImageFile(f); });
+      // Also handle PDF dropped on image area? No — separate areas.
+    });
+  }
+
+  // --- PDF DROP AREA ---
+  const pdfArea = document.getElementById('faktur-pdf-upload-area');
+  if (pdfArea && !pdfArea._ddReady) {
+    pdfArea._ddReady = true;
+
+    pdfArea.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); _setDropActive(pdfArea, true); });
+    pdfArea.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); _setDropActive(pdfArea, false); });
+    pdfArea.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      _setDropActive(pdfArea, false);
+      const file = e.dataTransfer.files[0]; if (!file) return;
+      _readFakturPdfFile(file);
+    });
+  }
+}
+
+// ---- Paste handler (Ctrl+V gambar ke modal faktur) ----
+document.addEventListener('paste', e => {
+  const modal = document.getElementById('modal-faktur');
+  if (!modal || !modal.classList.contains('open')) return;
+  // Check if pasting into a text input — don't intercept
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+  let handled = false;
+  for (const item of e.clipboardData.items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      _readFakturImageFile(item.getAsFile());
+      handled = true;
+    } else if (item.type === 'application/pdf') {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (file) _readFakturPdfFile(file);
+      handled = true;
+    }
+  }
+  if (handled) toast('📋 File dari clipboard ditambahkan!');
+});
+
+function openAddFaktur() {
+  tempFakturImages = [];
+  tempFakturPdfData = null;
+  document.getElementById('faktur-edit-id').value = '';
+  document.getElementById('modal-faktur-title').textContent = 'Tambah Data Faktur Pajak';
+  document.getElementById('faktur-tanggal').value = today();
+  document.getElementById('faktur-no-invoice').value = '';
+  document.getElementById('faktur-vendor').value = '';
+  document.getElementById('faktur-keterangan').value = '';
+  document.getElementById('faktur-status').value = 'Belum Ada';
+  renderFakturImgPreview();
+  renderFakturPdfPreview();
+  showModal('modal-faktur');
+  setTimeout(setupFakturDragDrop, 50);
+}
+
+function openEditFaktur(fsId) {
+  const item = DB.faktur.find(f => f._fsId === fsId);
+  if (!item) return;
+  tempFakturImages = [...(item.images || [])];
+  tempFakturPdfData = item.pdfData || null;
+  document.getElementById('faktur-edit-id').value = fsId;
+  document.getElementById('modal-faktur-title').textContent = 'Edit Data Faktur Pajak';
+  document.getElementById('faktur-tanggal').value = item.tanggal || today();
+  document.getElementById('faktur-no-invoice').value = item.noInvoice || '';
+  document.getElementById('faktur-vendor').value = item.vendor || '';
+  document.getElementById('faktur-keterangan').value = item.keterangan || '';
+  document.getElementById('faktur-status').value = item.status || 'Belum Ada';
+  renderFakturImgPreview();
+  renderFakturPdfPreview();
+  showModal('modal-faktur');
+  setTimeout(setupFakturDragDrop, 50);
+}
+
+async function saveFaktur() {
+  const fsId = document.getElementById('faktur-edit-id').value;
+  const noInvoice = document.getElementById('faktur-no-invoice').value.trim();
+  const tanggal = document.getElementById('faktur-tanggal').value;
+  if (!noInvoice || !tanggal) { toast('Tanggal vendor dan No Invoice wajib diisi!', 'error'); return; }
+  const obj = {
+    tanggal,
+    noInvoice,
+    vendor: document.getElementById('faktur-vendor').value.trim(),
+    keterangan: document.getElementById('faktur-keterangan').value.trim(),
+    status: document.getElementById('faktur-status').value,
+    images: [...tempFakturImages],
+    pdfData: tempFakturPdfData,
+    createdAt: Date.now()
+  };
+  try {
+    if (fsId) {
+      const existing = DB.faktur.find(f => f._fsId === fsId);
+      obj.createdAt = existing?.createdAt || Date.now();
+      await fsSet('faktur', fsId, obj);
+      toast('Data faktur berhasil diupdate!');
+    } else {
+      await fsAdd('faktur', obj);
+      toast('Data faktur berhasil ditambahkan!');
+    }
+    closeModal('modal-faktur');
+  } catch(e) { toast('Gagal menyimpan: ' + e.message, 'error'); }
+}
+
+async function deleteFaktur(fsId) {
+  const item = DB.faktur.find(f => f._fsId === fsId);
+  if (!item) return;
+  const ok = await elegantConfirm({
+    title: 'Hapus Data Faktur?',
+    message: 'Data faktur ini akan dihapus permanen.',
+    detail: `🧾 <b style="color:var(--text2)">${item.noInvoice}</b>`,
+    icon: '🧾', type: 'danger', okLabel: 'Ya, Hapus'
+  });
+  if (!ok) return;
+  try { await fsDel('faktur', fsId); toast('Data faktur dihapus!'); }
+  catch(e) { toast('Gagal hapus: ' + e.message, 'error'); }
+}
+
+function openViewFaktur(fsId) {
+  const item = DB.faktur.find(f => f._fsId === fsId);
+  if (!item) return;
+  const statusMap = { 'Belum Ada': '<span class="badge badge-red">❌ Belum Ada Faktur</span>', 'Sudah Ada': '<span class="badge badge-green">✅ Sudah Ada Faktur</span>', 'Dalam Proses': '<span class="badge badge-blue">🔄 Dalam Proses</span>' };
+  let html = `<div class="detail-view">
+    <div class="detail-row"><span class="detail-label">Tanggal Vendor :</span><span class="detail-val">${formatDate(item.tanggal)}</span></div>
+    <div class="detail-row"><span class="detail-label">No Invoice :</span><span class="detail-val" style="font-family:var(--mono);font-size:13px">${item.noInvoice||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Vendor : </span><span class="detail-val">${item.vendor||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Status :</span><span class="detail-val">${statusMap[item.status]||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Keterangan :</span><span class="detail-val" style="white-space:pre-wrap">${item.keterangan||'-'}</span></div>
+  </div>`;
+  if (item.images && item.images.length) {
+    html += `<div style="margin-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🖼️ Gambar Invoice (${item.images.length} file)</div><div class="img-preview-grid" id="faktur-detail-imgs"></div></div>`;
+  }
+  if (item.pdfData) {
+    const mb = (item.pdfData.size / 1024 / 1024).toFixed(2);
+    const kb = (item.pdfData.size / 1024).toFixed(1);
+    const sizeStr = item.pdfData.size > 1024*1024 ? `${mb} MB` : `${kb} KB`;
+    html += `<div style="margin-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">📄 PDF Faktur Pajak</div>
+      <div id="faktur-detail-pdf-card" style="background:var(--surface2);border:1px solid var(--blue);border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--blue-dim)'" onmouseout="this.style.background='var(--surface2)'">
+        <span style="font-size:28px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.pdfData.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${sizeStr} · Klik untuk preview</div>
+        </div>
+        <span style="font-size:20px;color:var(--blue)">👁️</span>
+      </div></div>`;
+  }
+  document.getElementById('modal-detail-faktur-body').innerHTML = html;
+
+  // Attach image zoom listeners
+  if (item.images && item.images.length) {
+    const grid = document.getElementById('faktur-detail-imgs');
+    item.images.forEach((src, i) => {
+      const div = document.createElement('div'); div.className = 'img-preview-item';
+      div.style.cursor = 'zoom-in';
+      const img = document.createElement('img'); img.src = src;
+      img.addEventListener('click', () => zoomImg(src, item.images, i));
+      div.addEventListener('click', () => zoomImg(src, item.images, i));
+      div.appendChild(img); grid.appendChild(div);
+    });
+  }
+
+  // Attach PDF viewer listener
+  if (item.pdfData) {
+    document.getElementById('faktur-detail-pdf-card').addEventListener('click', () => {
+      openPdfViewer(item.pdfData);
+    });
+  }
+
+  showModal('modal-detail-faktur');
+}
+
+// ---- PDF Viewer ----
+let _currentPdfData = null;
+
+function openPdfViewer(pdfData) {
+  _currentPdfData = pdfData;
+  document.getElementById('pdf-viewer-title').textContent = pdfData.name;
+
+  // Download button
+  const dlBtn = document.getElementById('pdf-viewer-download-btn');
+  dlBtn.onclick = () => downloadCurrentPdf();
+  const fallbackBtn = document.getElementById('pdf-fallback-download-btn');
+  fallbackBtn.onclick = () => downloadCurrentPdf();
+
+  // Load PDF into iframe
+  const iframe = document.getElementById('pdf-viewer-iframe');
+  const fallback = document.getElementById('pdf-viewer-fallback');
+  iframe.style.display = 'block';
+  fallback.style.display = 'none';
+
+  // Use blob URL for better browser compatibility
+  try {
+    const byteStr = atob(pdfData.data.split(',')[1]);
+    const arr = new Uint8Array(byteStr.length);
+    for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+    const blob = new Blob([arr], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    iframe.src = url;
+    // Clean up old blob URL after load
+    iframe.onload = () => { /* keep url alive while viewer open */ };
+    iframe._blobUrl = url;
+  } catch(e) {
+    iframe.style.display = 'none';
+    fallback.style.display = 'flex';
+  }
+
+  showModal('modal-pdf-viewer');
+}
+
+function closePdfViewer() {
+  const iframe = document.getElementById('pdf-viewer-iframe');
+  // Revoke blob URL to free memory
+  if (iframe._blobUrl) { URL.revokeObjectURL(iframe._blobUrl); iframe._blobUrl = null; }
+  iframe.src = '';
+  hideModal('modal-pdf-viewer');
+  _currentPdfData = null;
+}
+
+function downloadCurrentPdf() {
+  if (!_currentPdfData) return;
+  const a = document.createElement('a');
+  a.href = _currentPdfData.data;
+  a.download = _currentPdfData.name;
+  a.click();
+}
+
+function renderFakturTable() {
+  if (!DB.faktur) DB.faktur = [];
+  const search = (document.getElementById('faktur-search')?.value||'').toLowerCase().trim();
+  let data = search ? DB.faktur.filter(f =>
+    (f.noInvoice||'').toLowerCase().includes(search) ||
+    (f.vendor||'').toLowerCase().includes(search) ||
+    (f.keterangan||'').toLowerCase().includes(search)
+  ) : [...DB.faktur];
+  data.sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  document.getElementById('faktur-count').textContent = `${data.length} item`;
+  const tbody = document.getElementById('faktur-table-body');
+  tbody.innerHTML = '';
+  const statusBadge = { 'Belum Ada':'badge-red', 'Sudah Ada':'badge-green', 'Dalam Proses':'badge-blue' };
+  const statusLabel = { 'Belum Ada':'❌ Belum Ada', 'Sudah Ada':'✅ Sudah Ada', 'Dalam Proses':'🔄 Proses' };
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">${search?'🔍':'🧾'}</div><div class="empty-text">${search?`Tidak ada hasil untuk "${search}"`:' Belum ada data faktur. Klik ➕ untuk menambahkan.'}</div></div></td></tr>`;
+    return;
+  }
+  data.forEach(f => {
+    const tr = document.createElement('tr');
+
+    // Image thumbnails — clicking any opens full zoom with all images
+    let imgCell;
+    if (f.images && f.images.length) {
+      imgCell = document.createElement('div');
+      imgCell.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;align-items:center';
+      f.images.slice(0, 3).forEach((src, i) => {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:36px;height:36px;border-radius:4px;overflow:hidden;border:1px solid var(--border);cursor:zoom-in;flex-shrink:0';
+        const img = document.createElement('img');
+        img.src = src; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        wrap.appendChild(img);
+        wrap.addEventListener('click', e => { e.stopPropagation(); zoomImg(src, f.images, i); });
+        imgCell.appendChild(wrap);
+      });
+      if (f.images.length > 3) {
+        const more = document.createElement('div');
+        more.style.cssText = 'width:36px;height:36px;border-radius:4px;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);cursor:zoom-in;flex-shrink:0';
+        more.textContent = `+${f.images.length - 3}`;
+        more.addEventListener('click', e => { e.stopPropagation(); zoomImg(f.images[3], f.images, 3); });
+        imgCell.appendChild(more);
+      }
+    } else {
+      imgCell = document.createElement('span');
+      imgCell.style.cssText = 'color:var(--text3);font-size:12px';
+      imgCell.textContent = '-';
+    }
+
+    // PDF button — opens viewer
+    let pdfCell;
+    if (f.pdfData) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm';
+      btn.style.cssText = 'font-size:11px;border-color:var(--blue);color:var(--blue);background:var(--blue-dim)';
+      btn.textContent = '📄 Lihat PDF';
+      btn.addEventListener('click', e => { e.stopPropagation(); openPdfViewer(f.pdfData); });
+      pdfCell = btn;
+    } else {
+      pdfCell = document.createElement('span');
+      pdfCell.style.cssText = 'color:var(--text3);font-size:12px';
+      pdfCell.textContent = '-';
+    }
+
+    tr.innerHTML = `<td style="font-family:var(--mono);font-size:12px">${formatDate(f.tanggal)}</td><td style="font-weight:600;font-family:var(--mono);font-size:12px"></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:12px"></td><td></td><td></td><td><span class="badge ${statusBadge[f.status]||'badge-red'}">${statusLabel[f.status]||f.status}</span></td><td><div class="action-row"><button class="btn btn-sm btn-icon" title="Detail">👁️</button><button class="btn btn-sm btn-icon" title="Edit">✏️</button><button class="btn btn-sm btn-danger btn-icon" title="Hapus">🗑️</button></div></td>`;
+    tr.querySelectorAll('td')[1].textContent = f.noInvoice || '-';
+    tr.querySelectorAll('td')[2].textContent = f.vendor ? `${f.vendor}${f.keterangan?' — '+f.keterangan.slice(0,40):''}` : (f.keterangan||'-');
+    tr.querySelectorAll('td')[3].appendChild(imgCell);
+    tr.querySelectorAll('td')[4].appendChild(pdfCell);
+    tr.querySelector('[title="Detail"]').addEventListener('click', () => openViewFaktur(f._fsId));
+    tr.querySelector('[title="Edit"]').addEventListener('click', () => openEditFaktur(f._fsId));
+    tr.querySelector('[title="Hapus"]').addEventListener('click', () => deleteFaktur(f._fsId));
+    tbody.appendChild(tr);
+  });
+  // Update badge
+  const belumAda = DB.faktur.filter(f => f.status==='Belum Ada').length;
+  const bd = document.getElementById('badge-faktur'); if(bd){bd.textContent=belumAda;bd.style.display=belumAda>0?'':'none';}
+  const mbd = document.getElementById('mbadge-faktur'); if(mbd){mbd.textContent=belumAda;mbd.style.display=belumAda>0?'':'none';}
+}
+
+// ========================
 // MOBILE SIDEBAR
 // ========================
 function openSidebar(){document.querySelector('.sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('open');}
@@ -3807,6 +4364,15 @@ window.onAkunDeptChange=onAkunDeptChange; window.onAkunDeptFilterChange=onAkunDe
 window.toggleAkunPass=toggleAkunPass; window.resetAkunFilter=resetAkunFilter;
 window.sortAkun=sortAkun;
 window.toggleAkunAktif=toggleAkunAktif;
+window.openAddFaktur=openAddFaktur; window.openEditFaktur=openEditFaktur; window.saveFaktur=saveFaktur; window.deleteFaktur=deleteFaktur;
+window.handleFakturImgInput=handleFakturImgInput; window.handleFakturPdfInput=handleFakturPdfInput; window.removeFakturPdf=removeFakturPdf;
+window.renderFakturTable=renderFakturTable; window.openViewFaktur=openViewFaktur; window.setupFakturDragDrop=setupFakturDragDrop;
+window.openPdfViewer=openPdfViewer; window.closePdfViewer=closePdfViewer; window.downloadCurrentPdf=downloadCurrentPdf;
+
+// Close PDF viewer on backdrop click
+document.getElementById('modal-pdf-viewer').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-pdf-viewer')) closePdfViewer();
+});
 
 // ========================
 // INIT
@@ -3837,6 +4403,11 @@ window.toggleAkunAktif=toggleAkunAktif;
     <div class="mobile-nav-item" id="mnav-calendar" onclick="showPage('calendar');setMobileNav('calendar')">
       <span class="mobile-nav-icon">📅</span>
       <span>Kalender</span>
+    </div>
+    <div class="mobile-nav-item" id="mnav-faktur-pajak" onclick="showPage('faktur-pajak');setMobileNav('faktur-pajak')">
+      <span class="mobile-nav-icon">🧾</span>
+      <span>Faktur</span>
+      <span class="mobile-nav-badge" id="mbadge-faktur" style="display:none"></span>
     </div>
     <div class="mobile-nav-item" id="mnav-note" onclick="showPage('note');setMobileNav('note')">
       <span class="mobile-nav-icon">🗒️</span>
