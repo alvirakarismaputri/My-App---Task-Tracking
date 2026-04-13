@@ -1877,7 +1877,7 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     <div class="topbar">
       <div class="topbar-hamburger" style="display:none" onclick="openSidebar()">☰</div>
       <div>
-        <div class="page-title">🧾 Belum Ada Faktur Pajak</div>
+        <div class="page-title">🧾 Faktur Pajak</div>
         <div class="page-sub">Tracking invoice vendor yang belum ada faktur pajaknya</div>
       </div>
       <div class="topbar-actions">
@@ -1885,17 +1885,64 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
       </div>
     </div>
     <div class="page-content">
-      <div class="section-header">
-        <span class="section-title">🧾 Daftar Invoice Belum Ada Faktur Pajak</span>
-        <span class="tag" id="faktur-count">0 item</span>
-        <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-          <div style="position:relative">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;color:var(--text3)">🔍</span>
-            <input type="text" id="faktur-search" placeholder="Cari vendor / no invoice..." oninput="renderFakturTable()"
-              style="padding:6px 12px 6px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);outline:none;width:220px;transition:border-color 0.15s;"
-              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
-          </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px" id="faktur-stats-grid">
+        <div class="stat-card total" style="cursor:pointer" onclick="setFakturFilter('all')" id="fstat-all">
+          <div class="stat-label">Total Invoice</div>
+          <div class="stat-value" id="fstat-total" style="color:var(--primary-light)">0</div>
+          <div class="stat-sub">Semua data</div>
+          <div class="filter-indicator active" id="ffi-all">● Tampil Semua</div>
         </div>
+        <div class="stat-card" style="cursor:pointer;--card-color:var(--red)" onclick="setFakturFilter('warning')" id="fstat-warning">
+          <div class="stat-label" style="color:var(--text3)">⚠️ Perlu Ditanyakan</div>
+          <div class="stat-value" id="fstat-warning-val" style="color:var(--red)">0</div>
+          <div class="stat-sub">Estimasi sudah lewat</div>
+          <div class="filter-indicator" id="ffi-warning">Klik untuk filter</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="setFakturFilter('belum')" id="fstat-belum">
+          <div class="stat-label" style="color:var(--text3)">❌ Belum Ada</div>
+          <div class="stat-value" id="fstat-belum-val" style="color:var(--red)">0</div>
+          <div class="stat-sub">Faktur belum diterima</div>
+          <div class="filter-indicator" id="ffi-belum">Klik untuk filter</div>
+        </div>
+        <div class="stat-card clear" style="cursor:pointer" onclick="setFakturFilter('sudah')" id="fstat-sudah">
+          <div class="stat-label">✅ Sudah Ada</div>
+          <div class="stat-value" id="fstat-sudah-val" style="color:var(--green)">0</div>
+          <div class="stat-sub">Faktur sudah diterima</div>
+          <div class="filter-indicator" id="ffi-sudah">Klik untuk filter</div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Bar -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+        <span style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Filter:</span>
+        <select id="faktur-filter-status" class="form-select" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderFakturTable()">
+          <option value="">Semua Status</option>
+          <option value="Belum Ada">❌ Belum Ada</option>
+          <option value="Dalam Proses">🔄 Dalam Proses</option>
+          <option value="Sudah Ada">✅ Sudah Ada</option>
+        </select>
+        <select id="faktur-filter-warning" class="form-select" style="width:auto;padding:6px 10px;font-size:12px" onchange="renderFakturTable()">
+          <option value="">Semua Estimasi</option>
+          <option value="warning">⚠️ Estimasi Lewat (Perlu Ditanyakan)</option>
+          <option value="ok">✅ Estimasi Masih OK</option>
+          <option value="noest">— Belum Ada Estimasi</option>
+        </select>
+        <div style="margin-left:auto;position:relative">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;color:var(--text3)">🔍</span>
+          <input type="text" id="faktur-search" placeholder="Cari vendor / no invoice..." oninput="renderFakturTable()"
+            style="padding:6px 12px 6px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font);outline:none;width:220px;transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <button class="btn btn-sm" onclick="resetFakturFilter()" title="Reset filter">↺ Reset</button>
+      </div>
+
+      <!-- Table -->
+      <div class="section-header" style="margin-bottom:10px">
+        <span class="section-title">🧾 Daftar Invoice</span>
+        <span class="tag" id="faktur-count">0 item</span>
+        <span class="tag" id="faktur-filter-label" style="background:var(--yellow-dim);color:var(--yellow);display:none"></span>
       </div>
       <div class="table-wrap">
         <table>
@@ -1903,7 +1950,8 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
             <tr>
               <th>Tgl Vendor</th>
               <th>No Invoice</th>
-              <th>Keterangan</th>
+              <th>Vendor / Keterangan</th>
+              <th>Estimasi Selesai</th>
               <th>Gambar Invoice</th>
               <th>PDF Faktur</th>
               <th>Status</th>
@@ -2289,6 +2337,10 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
       <div class="form-group">
         <label class="form-label">Keterangan</label>
         <textarea class="form-textarea" id="faktur-keterangan" placeholder="Keterangan tambahan tentang invoice ini..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimasi Faktur Selesai <span style="color:var(--yellow);font-size:11px;font-weight:400;text-transform:none">⚠️ Jika lewat tanggal ini akan muncul peringatan</span></label>
+        <input type="date" class="form-input" id="faktur-estimasi">
       </div>
       <div class="form-group">
         <label class="form-label">Gambar Invoice</label>
@@ -4071,6 +4123,7 @@ function openAddFaktur() {
   document.getElementById('faktur-no-invoice').value = '';
   document.getElementById('faktur-vendor').value = '';
   document.getElementById('faktur-keterangan').value = '';
+  document.getElementById('faktur-estimasi').value = '';
   document.getElementById('faktur-status').value = 'Belum Ada';
   renderFakturImgPreview();
   renderFakturPdfPreview();
@@ -4089,6 +4142,7 @@ function openEditFaktur(fsId) {
   document.getElementById('faktur-no-invoice').value = item.noInvoice || '';
   document.getElementById('faktur-vendor').value = item.vendor || '';
   document.getElementById('faktur-keterangan').value = item.keterangan || '';
+  document.getElementById('faktur-estimasi').value = item.estimasi || '';
   document.getElementById('faktur-status').value = item.status || 'Belum Ada';
   renderFakturImgPreview();
   renderFakturPdfPreview();
@@ -4106,6 +4160,7 @@ async function saveFaktur() {
     noInvoice,
     vendor: document.getElementById('faktur-vendor').value.trim(),
     keterangan: document.getElementById('faktur-keterangan').value.trim(),
+    estimasi: document.getElementById('faktur-estimasi').value || '',
     status: document.getElementById('faktur-status').value,
     images: [...tempFakturImages],
     pdfData: tempFakturPdfData,
@@ -4142,13 +4197,42 @@ async function deleteFaktur(fsId) {
 function openViewFaktur(fsId) {
   const item = DB.faktur.find(f => f._fsId === fsId);
   if (!item) return;
+  const isWarn = isFakturWarning(item);
+  const todayStr = today();
   const statusMap = { 'Belum Ada': '<span class="badge badge-red">❌ Belum Ada Faktur</span>', 'Sudah Ada': '<span class="badge badge-green">✅ Sudah Ada Faktur</span>', 'Dalam Proses': '<span class="badge badge-blue">🔄 Dalam Proses</span>' };
-  let html = `<div class="detail-view">
-    <div class="detail-row"><span class="detail-label">Tanggal Vendor :</span><span class="detail-val">${formatDate(item.tanggal)}</span></div>
-    <div class="detail-row"><span class="detail-label">No Invoice :</span><span class="detail-val" style="font-family:var(--mono);font-size:13px">${item.noInvoice||'-'}</span></div>
-    <div class="detail-row"><span class="detail-label">Vendor : </span><span class="detail-val">${item.vendor||'-'}</span></div>
-    <div class="detail-row"><span class="detail-label">Status :</span><span class="detail-val">${statusMap[item.status]||'-'}</span></div>
-    <div class="detail-row"><span class="detail-label">Keterangan :</span><span class="detail-val" style="white-space:pre-wrap">${item.keterangan||'-'}</span></div>
+
+  // Estimasi display for detail
+  let estimasiDetail = '-';
+  if (item.estimasi) {
+    const diff = Math.ceil((new Date(item.estimasi) - new Date(todayStr)) / (1000*60*60*24));
+    if (isWarn) {
+      estimasiDetail = `<span style="color:var(--red);font-family:var(--mono)">${formatDate(item.estimasi)}</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--red-dim);color:var(--red);font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;margin-left:8px">⚠️ Lewat ${Math.abs(diff)} hari — Segera tanyakan ke vendor!</span>`;
+    } else if (diff <= 3) {
+      estimasiDetail = `<span style="color:var(--yellow);font-family:var(--mono)">${formatDate(item.estimasi)}</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;background:var(--yellow-dim);color:var(--yellow);font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;margin-left:8px">🕐 ${diff===0?'Hari ini':diff+' hari lagi'}</span>`;
+    } else {
+      estimasiDetail = `<span style="font-family:var(--mono)">${formatDate(item.estimasi)}</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:8px">${diff} hari lagi</span>`;
+    }
+  }
+
+  // Warning banner if overdue
+  const warnBanner = isWarn ? `<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:22px">⚠️</span>
+    <div>
+      <div style="font-weight:700;color:var(--red);font-size:13px">Faktur pajak perlu segera ditanyakan ke vendor!</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Estimasi selesai sudah terlewat. Hubungi <b>${item.vendor||'vendor'}</b> untuk konfirmasi status faktur pajak invoice <b>${item.noInvoice}</b>.</div>
+    </div>
+  </div>` : '';
+
+  let html = `${warnBanner}<div class="detail-view">
+    <div class="detail-row"><span class="detail-label">Tanggal Vendor</span><span class="detail-val" style="font-family:var(--mono)">${formatDate(item.tanggal)}</span></div>
+    <div class="detail-row"><span class="detail-label">No Invoice</span><span class="detail-val" style="font-family:var(--mono);font-size:13px">${item.noInvoice||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Vendor</span><span class="detail-val">${item.vendor||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-val">${statusMap[item.status]||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Estimasi Selesai</span><span class="detail-val">${estimasiDetail}</span></div>
+    <div class="detail-row"><span class="detail-label">Keterangan</span><span class="detail-val" style="white-space:pre-wrap">${item.keterangan||'-'}</span></div>
   </div>`;
   if (item.images && item.images.length) {
     html += `<div style="margin-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🖼️ Gambar Invoice (${item.images.length} file)</div><div class="img-preview-grid" id="faktur-detail-imgs"></div></div>`;
@@ -4169,7 +4253,6 @@ function openViewFaktur(fsId) {
   }
   document.getElementById('modal-detail-faktur-body').innerHTML = html;
 
-  // Attach image zoom listeners
   if (item.images && item.images.length) {
     const grid = document.getElementById('faktur-detail-imgs');
     item.images.forEach((src, i) => {
@@ -4181,14 +4264,9 @@ function openViewFaktur(fsId) {
       div.appendChild(img); grid.appendChild(div);
     });
   }
-
-  // Attach PDF viewer listener
   if (item.pdfData) {
-    document.getElementById('faktur-detail-pdf-card').addEventListener('click', () => {
-      openPdfViewer(item.pdfData);
-    });
+    document.getElementById('faktur-detail-pdf-card').addEventListener('click', () => openPdfViewer(item.pdfData));
   }
-
   showModal('modal-detail-faktur');
 }
 
@@ -4247,28 +4325,153 @@ function downloadCurrentPdf() {
   a.click();
 }
 
+// ---- Faktur filter state ----
+let fakturActiveFilter = 'all';
+
+function setFakturFilter(f) {
+  fakturActiveFilter = f;
+  // Update stat card highlight
+  ['all','warning','belum','sudah'].forEach(k => {
+    const card = document.getElementById('fstat-'+k);
+    const fi = document.getElementById('ffi-'+k);
+    if (!card||!fi) return;
+    if (k===f) {
+      card.style.outline = '2px solid currentColor';
+      fi.textContent = '● Aktif'; fi.classList.add('active');
+    } else {
+      card.style.outline = '';
+      fi.textContent = 'Klik untuk filter'; fi.classList.remove('active');
+    }
+  });
+  if (f==='all') { const fi=document.getElementById('ffi-all'); if(fi){fi.textContent='● Tampil Semua';fi.classList.add('active');} }
+  // Sync dropdown
+  const sel = document.getElementById('faktur-filter-status');
+  const selW = document.getElementById('faktur-filter-warning');
+  if (sel) sel.value = '';
+  if (selW) selW.value = '';
+  if (f==='belum' && sel) sel.value = 'Belum Ada';
+  if (f==='sudah' && sel) sel.value = 'Sudah Ada';
+  if (f==='warning' && selW) selW.value = 'warning';
+  renderFakturTable();
+}
+
+function resetFakturFilter() {
+  fakturActiveFilter = 'all';
+  const sel = document.getElementById('faktur-filter-status');
+  const selW = document.getElementById('faktur-filter-warning');
+  if (sel) sel.value = '';
+  if (selW) selW.value = '';
+  const search = document.getElementById('faktur-search');
+  if (search) search.value = '';
+  setFakturFilter('all');
+}
+
+function isFakturWarning(f) {
+  // Warning if: estimasi exists AND estimasi < today AND status is NOT 'Sudah Ada'
+  if (!f.estimasi) return false;
+  if (f.status === 'Sudah Ada') return false;
+  return f.estimasi < today();
+}
+
 function renderFakturTable() {
   if (!DB.faktur) DB.faktur = [];
-  const search = (document.getElementById('faktur-search')?.value||'').toLowerCase().trim();
-  let data = search ? DB.faktur.filter(f =>
+  const todayStr = today();
+
+  // --- Compute counts for stat cards ---
+  const totalAll   = DB.faktur.length;
+  const cntWarning = DB.faktur.filter(f => isFakturWarning(f)).length;
+  const cntBelum   = DB.faktur.filter(f => f.status === 'Belum Ada').length;
+  const cntSudah   = DB.faktur.filter(f => f.status === 'Sudah Ada').length;
+  const setV = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setV('fstat-total', totalAll);
+  setV('fstat-warning-val', cntWarning);
+  setV('fstat-belum-val', cntBelum);
+  setV('fstat-sudah-val', cntSudah);
+
+  // Warning card border pulse if > 0
+  const wCard = document.getElementById('fstat-warning');
+  if (wCard) wCard.style.borderColor = cntWarning > 0 ? 'var(--red)' : '';
+
+  // --- Apply filters ---
+  const search      = (document.getElementById('faktur-search')?.value||'').toLowerCase().trim();
+  const fStatus     = document.getElementById('faktur-filter-status')?.value || '';
+  const fWarning    = document.getElementById('faktur-filter-warning')?.value || '';
+
+  let data = [...DB.faktur];
+  if (search) data = data.filter(f =>
     (f.noInvoice||'').toLowerCase().includes(search) ||
     (f.vendor||'').toLowerCase().includes(search) ||
     (f.keterangan||'').toLowerCase().includes(search)
-  ) : [...DB.faktur];
-  data.sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  );
+  if (fStatus) data = data.filter(f => f.status === fStatus);
+  if (fWarning === 'warning') data = data.filter(f => isFakturWarning(f));
+  else if (fWarning === 'ok') data = data.filter(f => f.estimasi && f.estimasi >= todayStr && f.status !== 'Sudah Ada');
+  else if (fWarning === 'noest') data = data.filter(f => !f.estimasi);
+
+  // Sort: warning first, then by createdAt desc
+  data.sort((a, b) => {
+    const aw = isFakturWarning(a) ? 1 : 0;
+    const bw = isFakturWarning(b) ? 1 : 0;
+    if (bw !== aw) return bw - aw;
+    return (b.createdAt||0) - (a.createdAt||0);
+  });
+
+  // Filter label
+  const hasFilter = search || fStatus || fWarning || fakturActiveFilter !== 'all';
+  const fl = document.getElementById('faktur-filter-label');
+  if (fl) {
+    if (hasFilter && fWarning==='warning') { fl.textContent='⚠️ Filter: Perlu Ditanyakan'; fl.style.display=''; }
+    else if (hasFilter && fStatus) { fl.textContent=`Filter: ${fStatus}`; fl.style.display=''; }
+    else if (hasFilter && search) { fl.textContent=`Cari: "${search}"`; fl.style.display=''; }
+    else fl.style.display='none';
+  }
+
   document.getElementById('faktur-count').textContent = `${data.length} item`;
   const tbody = document.getElementById('faktur-table-body');
   tbody.innerHTML = '';
+
   const statusBadge = { 'Belum Ada':'badge-red', 'Sudah Ada':'badge-green', 'Dalam Proses':'badge-blue' };
   const statusLabel = { 'Belum Ada':'❌ Belum Ada', 'Sudah Ada':'✅ Sudah Ada', 'Dalam Proses':'🔄 Proses' };
+
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">${search?'🔍':'🧾'}</div><div class="empty-text">${search?`Tidak ada hasil untuk "${search}"`:' Belum ada data faktur. Klik ➕ untuk menambahkan.'}</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">${search||fStatus||fWarning?'🔍':'🧾'}</div><div class="empty-text">${search||fStatus||fWarning?'Tidak ada data yang cocok dengan filter':'Belum ada data faktur. Klik ➕ untuk menambahkan.'}</div></div></td></tr>`;
+    // Still update badges
+    _updateFakturBadge();
     return;
   }
-  data.forEach(f => {
-    const tr = document.createElement('tr');
 
-    // Image thumbnails — clicking any opens full zoom with all images
+  data.forEach(f => {
+    const isWarn = isFakturWarning(f);
+    const tr = document.createElement('tr');
+    if (isWarn) tr.style.cssText = 'background:rgba(248,81,73,0.04)';
+
+    // --- Estimasi cell ---
+    let estimasiHtml = '';
+    if (f.estimasi) {
+      const diff = Math.ceil((new Date(f.estimasi) - new Date(todayStr)) / (1000*60*60*24));
+      if (isWarn) {
+        const overDays = Math.abs(diff);
+        estimasiHtml = `<div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--red)">${formatDate(f.estimasi)}</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--red-dim);color:var(--red);font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;width:fit-content">
+            ⚠️ Lewat ${overDays} hari
+          </span>
+        </div>`;
+      } else if (diff <= 3) {
+        estimasiHtml = `<div style="display:flex;flex-direction:column;gap:3px">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--yellow)">${formatDate(f.estimasi)}</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--yellow-dim);color:var(--yellow);font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;width:fit-content">
+            🕐 ${diff === 0 ? 'Hari ini' : diff + ' hari lagi'}
+          </span>
+        </div>`;
+      } else {
+        estimasiHtml = `<span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${formatDate(f.estimasi)}</span>`;
+      }
+    } else {
+      estimasiHtml = '<span style="color:var(--text3);font-size:12px">—</span>';
+    }
+
+    // --- Image thumbnails ---
     let imgCell;
     if (f.images && f.images.length) {
       imgCell = document.createElement('div');
@@ -4295,7 +4498,7 @@ function renderFakturTable() {
       imgCell.textContent = '-';
     }
 
-    // PDF button — opens viewer
+    // --- PDF button ---
     let pdfCell;
     if (f.pdfData) {
       const btn = document.createElement('button');
@@ -4310,20 +4513,42 @@ function renderFakturTable() {
       pdfCell.textContent = '-';
     }
 
-    tr.innerHTML = `<td style="font-family:var(--mono);font-size:12px">${formatDate(f.tanggal)}</td><td style="font-weight:600;font-family:var(--mono);font-size:12px"></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:12px"></td><td></td><td></td><td><span class="badge ${statusBadge[f.status]||'badge-red'}">${statusLabel[f.status]||f.status}</span></td><td><div class="action-row"><button class="btn btn-sm btn-icon" title="Detail">👁️</button><button class="btn btn-sm btn-icon" title="Edit">✏️</button><button class="btn btn-sm btn-danger btn-icon" title="Hapus">🗑️</button></div></td>`;
-    tr.querySelectorAll('td')[1].textContent = f.noInvoice || '-';
-    tr.querySelectorAll('td')[2].textContent = f.vendor ? `${f.vendor}${f.keterangan?' — '+f.keterangan.slice(0,40):''}` : (f.keterangan||'-');
-    tr.querySelectorAll('td')[3].appendChild(imgCell);
-    tr.querySelectorAll('td')[4].appendChild(pdfCell);
+    // Warning bell indicator in no-invoice cell
+    const warnIcon = isWarn ? ' <span title="Perlu ditanyakan ke vendor!" style="color:var(--red);font-size:14px;vertical-align:middle">⚠️</span>' : '';
+
+    tr.innerHTML = `
+      <td style="font-family:var(--mono);font-size:12px">${formatDate(f.tanggal)}</td>
+      <td style="font-weight:600;font-family:var(--mono);font-size:12px"></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:12px"></td>
+      <td>${estimasiHtml}</td>
+      <td></td>
+      <td></td>
+      <td><span class="badge ${statusBadge[f.status]||'badge-red'}">${statusLabel[f.status]||f.status}</span></td>
+      <td><div class="action-row"><button class="btn btn-sm btn-icon" title="Detail">👁️</button><button class="btn btn-sm btn-icon" title="Edit">✏️</button><button class="btn btn-sm btn-danger btn-icon" title="Hapus">🗑️</button></div></td>`;
+
+    // Set text content safely
+    const cells = tr.querySelectorAll('td');
+    cells[1].innerHTML = (f.noInvoice||'-') + warnIcon;
+    cells[2].textContent = f.vendor ? `${f.vendor}${f.keterangan?' — '+f.keterangan.slice(0,35):''}` : (f.keterangan||'-');
+    cells[4].appendChild(imgCell);
+    cells[5].appendChild(pdfCell);
+
     tr.querySelector('[title="Detail"]').addEventListener('click', () => openViewFaktur(f._fsId));
-    tr.querySelector('[title="Edit"]').addEventListener('click', () => openEditFaktur(f._fsId));
-    tr.querySelector('[title="Hapus"]').addEventListener('click', () => deleteFaktur(f._fsId));
+    tr.querySelector('[title="Edit"]').addEventListener('click',   () => openEditFaktur(f._fsId));
+    tr.querySelector('[title="Hapus"]').addEventListener('click',  () => deleteFaktur(f._fsId));
     tbody.appendChild(tr);
   });
-  // Update badge
-  const belumAda = DB.faktur.filter(f => f.status==='Belum Ada').length;
-  const bd = document.getElementById('badge-faktur'); if(bd){bd.textContent=belumAda;bd.style.display=belumAda>0?'':'none';}
-  const mbd = document.getElementById('mbadge-faktur'); if(mbd){mbd.textContent=belumAda;mbd.style.display=belumAda>0?'':'none';}
+
+  _updateFakturBadge();
+}
+
+function _updateFakturBadge() {
+  if (!DB.faktur) return;
+  const cntWarn = DB.faktur.filter(f => isFakturWarning(f)).length;
+  const cntBelum = DB.faktur.filter(f => f.status === 'Belum Ada').length;
+  const badgeVal = cntWarn > 0 ? cntWarn : cntBelum;
+  const bd = document.getElementById('badge-faktur'); if(bd){bd.textContent=badgeVal;bd.style.display=badgeVal>0?'':'none';}
+  const mbd = document.getElementById('mbadge-faktur'); if(mbd){mbd.textContent=badgeVal;mbd.style.display=badgeVal>0?'':'none';}
 }
 
 // ========================
@@ -4368,6 +4593,7 @@ window.openAddFaktur=openAddFaktur; window.openEditFaktur=openEditFaktur; window
 window.handleFakturImgInput=handleFakturImgInput; window.handleFakturPdfInput=handleFakturPdfInput; window.removeFakturPdf=removeFakturPdf;
 window.renderFakturTable=renderFakturTable; window.openViewFaktur=openViewFaktur; window.setupFakturDragDrop=setupFakturDragDrop;
 window.openPdfViewer=openPdfViewer; window.closePdfViewer=closePdfViewer; window.downloadCurrentPdf=downloadCurrentPdf;
+window.setFakturFilter=setFakturFilter; window.resetFakturFilter=resetFakturFilter; window.isFakturWarning=isFakturWarning;
 
 // Close PDF viewer on backdrop click
 document.getElementById('modal-pdf-viewer').addEventListener('click', e => {
