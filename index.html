@@ -1525,6 +1525,157 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
   display: none;
 }
 .btn-spinner.show { display: inline-block; }
+
+/* Tutorial Styles */
+.tutorial-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tutorial-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.tutorial-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.tutorial-card-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+.tutorial-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.tutorial-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.tutorial-card-category {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary-dim);
+  color: var(--primary-light);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  font-family: var(--mono);
+}
+.tutorial-card-description {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.tutorial-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.tutorial-card-meta {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+.tutorial-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface2);
+}
+.tutorial-upload-area:hover,
+.tutorial-upload-area.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-dim);
+}
+.tutorial-step-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.tutorial-step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tutorial-step-number {
+  background: var(--primary);
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.tutorial-file-item {
+  position: relative;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tutorial-file-item:hover {
+  border-color: var(--primary);
+}
+.tutorial-file-item img,
+.tutorial-file-item video {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+.tutorial-file-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+.tutorial-file-remove:hover {
+  opacity: 1;
+}
+.tutorial-file-name {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--surface3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -1611,6 +1762,9 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
     </div>
     <div class="nav-item" onclick="showPage('akun-odoo')">
       <span class="nav-icon">👤</span> Akun Odoo
+    </div>
+    <div class="nav-item" onclick="showPage('tutorial')">
+      <span class="nav-icon">📚</span> Tutorial
     </div>
   </nav>
   <div style="padding:12px 10px;border-top:1px solid var(--border)" class="sidebar-db-section">
@@ -2028,6 +2182,31 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
             <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">Belum ada data akun</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TUTORIAL ============ -->
+  <div id="page-tutorial" class="page">
+    <div class="topbar">
+      <div class="topbar-hamburger" style="display:none" onclick="openSidebar()">☰</div>
+      <div>
+        <div class="page-title">📚 Tutorial</div>
+        <div class="page-sub">Panduan lengkap penggunaan sistem</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openAddTutorial()">➕ <span class="btn-text">Tambah Tutorial</span></button>
+      </div>
+    </div>
+    <div class="page-content">
+      <!-- Tutorial List -->
+      <div id="tutorial-list" style="display:grid;gap:16px">
+        <!-- Tutorial items akan ditampilkan di sini -->
+      </div>
+      <div id="tutorial-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">Belum Ada Tutorial</div>
+        <div class="empty-text">Klik tombol "Tambah Tutorial" untuk membuat panduan baru</div>
       </div>
     </div>
   </div>
@@ -2473,6 +2652,93 @@ tbody td:first-child { color: var(--text); font-weight: 500; }
   </div>
 </div>
 
+<!-- Modal: Tutorial Form -->
+<div class="modal-overlay" id="modal-tutorial">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span>📚</span>
+      <div class="modal-title" id="modal-tutorial-title">Tambah Tutorial</div>
+      <button class="modal-close" onclick="closeModal('modal-tutorial')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tutorial-edit-id">
+      <div class="form-group">
+        <label class="form-label">Judul Tutorial</label>
+        <input type="text" class="form-input" id="tutorial-title" placeholder="Misal: Cara Login ke Sistem">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori</label>
+        <select class="form-select" id="tutorial-category">
+          <option value="Umum">📖 Umum</option>
+          <option value="Dashboard">📊 Dashboard</option>
+          <option value="Kendala">🔧 Kendala</option>
+          <option value="Request">📝 Request</option>
+          <option value="Report">📋 Report</option>
+          <option value="Kalender">📅 Kalender</option>
+          <option value="Faktur">🧾 Faktur Pajak</option>
+          <option value="Note">🗒️ Note</option>
+          <option value="Akun">👤 Akun Odoo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan / Deskripsi</label>
+        <textarea class="form-textarea" id="tutorial-description" placeholder="Jelaskan secara singkat tentang tutorial ini..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Langkah-Langkah</label>
+        <div id="tutorial-steps-container"></div>
+        <button class="btn btn-sm" onclick="addTutorialStep()" style="margin-top:8px">➕ Tambah Langkah</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload File (Gambar / Video)</label>
+        <div class="tutorial-upload-area" id="tutorial-drop-area">
+          <input type="file" id="tutorial-file-input" multiple accept="image/*,video/*" onchange="handleTutorialFileInput(this)" style="display:none">
+          <div class="img-upload-icon">📁</div>
+          <div class="img-upload-text">Klik, Drag & Drop, atau Paste (Ctrl+V)</div>
+          <div class="img-upload-hint">Support: JPG, PNG, GIF, MP4, WebM</div>
+        </div>
+        <div id="tutorial-file-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-tutorial')">Batal</button>
+      <button class="btn btn-primary" onclick="saveTutorial()">💾 Simpan Tutorial</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: View Tutorial -->
+<div class="modal-overlay" id="modal-view-tutorial">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span>📚</span>
+      <div class="modal-title" id="view-tutorial-title">Detail Tutorial</div>
+      <button class="modal-close" onclick="closeModal('modal-view-tutorial')">✕</button>
+    </div>
+    <div class="modal-body" id="view-tutorial-body" style="max-height:70vh;overflow-y:auto">
+      <!-- Content will be populated by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-view-tutorial')">Tutup</button>
+      <button class="btn btn-primary" onclick="editTutorialFromView()">✏️ Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Media Preview Modal -->
+<div class="modal-overlay" id="modal-media-preview" style="z-index:2001">
+  <div class="modal" style="max-width:90vw;max-height:90vh">
+    <div class="modal-header">
+      <span>🖼️</span>
+      <div class="modal-title" id="media-preview-title">Preview Media</div>
+      <button class="modal-close" onclick="closeMediaPreview()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;display:flex;align-items:center;justify-content:center;background:var(--bg);min-height:400px;max-height:80vh;overflow:auto">
+      <div id="media-preview-content" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Image Zoom -->
 <div class="zoom-modal" id="zoom-modal">
   <button class="zoom-nav-btn zoom-prev" id="zoom-prev" onclick="zoomPrev(event)">&#8249;</button>
@@ -2526,7 +2792,8 @@ let DB = {
   report: [],
   note: [],
   akun_odoo: [],
-  faktur: []
+  faktur: [],
+  tutorial: []
 };
 
 // Show loading overlay
@@ -2572,13 +2839,14 @@ async function fsGetAll(colName) {
 // REALTIME LISTENERS
 // ========================
 function setupListeners() {
-  ['kendala','request','report','note','akun_odoo','faktur'].forEach(col => {
+  ['kendala','request','report','note','akun_odoo','faktur','tutorial'].forEach(col => {
     onSnapshot(collection(db, col), snap => {
       DB[col] = snap.docs.map(d => ({ ...d.data(), _fsId: d.id }));
       // Sort by createdAt desc
       DB[col].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
       renderAll();
       if (window.currentPage === 'calendar') renderCalendar();
+      if (window.currentPage === 'tutorial') renderTutorials();
     });
   });
 }
@@ -4595,6 +4863,454 @@ window.renderFakturTable=renderFakturTable; window.openViewFaktur=openViewFaktur
 window.openPdfViewer=openPdfViewer; window.closePdfViewer=closePdfViewer; window.downloadCurrentPdf=downloadCurrentPdf;
 window.setFakturFilter=setFakturFilter; window.resetFakturFilter=resetFakturFilter; window.isFakturWarning=isFakturWarning;
 
+// ========================
+// TUTORIAL FUNCTIONS
+// ========================
+let tutorialFiles = [];
+let currentTutorialId = null;
+
+function openAddTutorial() {
+  document.getElementById('tutorial-edit-id').value = '';
+  document.getElementById('modal-tutorial-title').textContent = 'Tambah Tutorial';
+  document.getElementById('tutorial-title').value = '';
+  document.getElementById('tutorial-category').value = 'Umum';
+  document.getElementById('tutorial-description').value = '';
+  document.getElementById('tutorial-steps-container').innerHTML = '';
+  tutorialFiles = [];
+  renderTutorialFilePreview();
+  addTutorialStep();
+  setupTutorialDragDrop();
+  openModal('modal-tutorial');
+}
+
+function openEditTutorial(id) {
+  const tut = DB.tutorial.find(t => t._fsId === id);
+  if (!tut) return;
+  
+  document.getElementById('tutorial-edit-id').value = id;
+  document.getElementById('modal-tutorial-title').textContent = 'Edit Tutorial';
+  document.getElementById('tutorial-title').value = tut.title || '';
+  document.getElementById('tutorial-category').value = tut.category || 'Umum';
+  document.getElementById('tutorial-description').value = tut.description || '';
+  
+  // Render steps
+  const container = document.getElementById('tutorial-steps-container');
+  container.innerHTML = '';
+  if (tut.steps && tut.steps.length) {
+    tut.steps.forEach((step, i) => {
+      addTutorialStep();
+      document.querySelectorAll('.tutorial-step-input')[i].value = step;
+    });
+  } else {
+    addTutorialStep();
+  }
+  
+  // Load files
+  tutorialFiles = tut.files || [];
+  renderTutorialFilePreview();
+  setupTutorialDragDrop();
+  openModal('modal-tutorial');
+}
+
+function addTutorialStep() {
+  const container = document.getElementById('tutorial-steps-container');
+  const stepNum = container.children.length + 1;
+  const stepDiv = document.createElement('div');
+  stepDiv.className = 'tutorial-step-item';
+  stepDiv.innerHTML = `
+    <div class="tutorial-step-header">
+      <div class="tutorial-step-number">${stepNum}</div>
+      <input type="text" class="form-input tutorial-step-input" placeholder="Langkah ${stepNum}: Jelaskan apa yang harus dilakukan..." style="flex:1">
+      <button class="btn btn-sm btn-danger btn-icon" onclick="removeTutorialStep(this)" title="Hapus">🗑️</button>
+    </div>
+  `;
+  container.appendChild(stepDiv);
+}
+
+function removeTutorialStep(btn) {
+  const container = document.getElementById('tutorial-steps-container');
+  if (container.children.length <= 1) {
+    showToast('Minimal harus ada 1 langkah', 'warning');
+    return;
+  }
+  btn.closest('.tutorial-step-item').remove();
+  // Renumber steps
+  Array.from(container.children).forEach((step, i) => {
+    step.querySelector('.tutorial-step-number').textContent = i + 1;
+    step.querySelector('.tutorial-step-input').placeholder = `Langkah ${i + 1}: Jelaskan apa yang harus dilakukan...`;
+  });
+}
+
+async function saveTutorial() {
+  const title = document.getElementById('tutorial-title').value.trim();
+  const category = document.getElementById('tutorial-category').value;
+  const description = document.getElementById('tutorial-description').value.trim();
+  
+  if (!title) {
+    showToast('Judul tutorial harus diisi', 'error');
+    return;
+  }
+  
+  // Get steps
+  const stepInputs = document.querySelectorAll('.tutorial-step-input');
+  const steps = Array.from(stepInputs).map(input => input.value.trim()).filter(s => s);
+  
+  if (!steps.length) {
+    showToast('Minimal harus ada 1 langkah yang diisi', 'error');
+    return;
+  }
+  
+  const data = {
+    title,
+    category,
+    description,
+    steps,
+    files: tutorialFiles,
+    createdAt: Date.now()
+  };
+  
+  const editId = document.getElementById('tutorial-edit-id').value;
+  try {
+    if (editId) {
+      await setDoc(doc(db, 'tutorial', editId), data, { merge: true });
+      showToast('Tutorial berhasil diupdate', 'success');
+    } else {
+      await addDoc(collection(db, 'tutorial'), data);
+      showToast('Tutorial berhasil ditambahkan', 'success');
+    }
+    closeModal('modal-tutorial');
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal menyimpan tutorial', 'error');
+  }
+}
+
+async function deleteTutorial(id) {
+  if (!confirm('Yakin ingin menghapus tutorial ini?')) return;
+  try {
+    await deleteDoc(doc(db, 'tutorial', id));
+    showToast('Tutorial berhasil dihapus', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal menghapus tutorial', 'error');
+  }
+}
+
+function setupTutorialDragDrop() {
+  const dropArea = document.getElementById('tutorial-drop-area');
+  if (!dropArea) return;
+  
+  // Click to select file
+  dropArea.onclick = (e) => {
+    if (e.target === dropArea || e.target.closest('.img-upload-icon, .img-upload-text, .img-upload-hint')) {
+      document.getElementById('tutorial-file-input').click();
+    }
+  };
+  
+  // Drag & Drop
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+  });
+  
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => dropArea.classList.add('drag-over'), false);
+  });
+  
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => dropArea.classList.remove('drag-over'), false);
+  });
+  
+  dropArea.addEventListener('drop', handleTutorialDrop, false);
+  
+  // Paste support
+  document.addEventListener('paste', handleTutorialPaste);
+}
+
+function handleTutorialDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleTutorialFiles(Array.from(files));
+}
+
+function handleTutorialPaste(e) {
+  // Only handle paste when modal is open
+  if (!document.getElementById('modal-tutorial').classList.contains('show')) return;
+  
+  const items = e.clipboardData.items;
+  const files = [];
+  for (let item of items) {
+    if (item.type.indexOf('image') !== -1 || item.type.indexOf('video') !== -1) {
+      files.push(item.getAsFile());
+    }
+  }
+  if (files.length) {
+    handleTutorialFiles(files);
+  }
+}
+
+function handleTutorialFileInput(input) {
+  handleTutorialFiles(Array.from(input.files));
+  input.value = '';
+}
+
+function handleTutorialFiles(files) {
+  files.forEach(file => {
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        tutorialFiles.push({
+          type: file.type.startsWith('image/') ? 'image' : 'video',
+          data: e.target.result,
+          name: file.name
+        });
+        renderTutorialFilePreview();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      showToast(`File ${file.name} tidak didukung`, 'warning');
+    }
+  });
+}
+
+function removeTutorialFile(index) {
+  tutorialFiles.splice(index, 1);
+  renderTutorialFilePreview();
+}
+
+function renderTutorialFilePreview() {
+  const preview = document.getElementById('tutorial-file-preview');
+  if (!tutorialFiles.length) {
+    preview.innerHTML = '';
+    return;
+  }
+  
+  preview.innerHTML = tutorialFiles.map((file, i) => {
+    const mediaTag = file.type === 'image' 
+      ? `<img src="${file.data}" alt="${file.name}">`
+      : `<video src="${file.data}" muted></video>`;
+    
+    return `
+      <div class="tutorial-file-item" onclick="previewMedia(${i})">
+        ${mediaTag}
+        <button class="tutorial-file-remove" onclick="event.stopPropagation();removeTutorialFile(${i})">✕</button>
+        <div class="tutorial-file-name" title="${file.name}">${file.name}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function previewMedia(index) {
+  const file = tutorialFiles[index];
+  if (!file) return;
+  
+  const content = document.getElementById('media-preview-content');
+  const title = document.getElementById('media-preview-title');
+  
+  title.textContent = file.name;
+  
+  if (file.type === 'image') {
+    content.innerHTML = `<img src="${file.data}" style="max-width:100%;max-height:80vh;object-fit:contain">`;
+  } else {
+    content.innerHTML = `<video src="${file.data}" controls style="max-width:100%;max-height:80vh" autoplay></video>`;
+  }
+  
+  showModal('modal-media-preview');
+}
+
+function closeMediaPreview() {
+  const content = document.getElementById('media-preview-content');
+  const video = content.querySelector('video');
+  if (video) video.pause();
+  closeModal('modal-media-preview');
+}
+
+function renderTutorials() {
+  const list = document.getElementById('tutorial-list');
+  const empty = document.getElementById('tutorial-empty');
+  
+  if (!DB.tutorial || !DB.tutorial.length) {
+    list.style.display = 'none';
+    empty.style.display = 'flex';
+    return;
+  }
+  
+  list.style.display = 'grid';
+  empty.style.display = 'none';
+  
+  const icons = {
+    'Umum': '📖',
+    'Dashboard': '📊',
+    'Kendala': '🔧',
+    'Request': '📝',
+    'Report': '📋',
+    'Kalender': '📅',
+    'Faktur': '🧾',
+    'Note': '🗒️',
+    'Akun': '👤'
+  };
+  
+  list.innerHTML = DB.tutorial.map(tut => {
+    const icon = icons[tut.category] || '📚';
+    const stepCount = tut.steps ? tut.steps.length : 0;
+    const fileCount = tut.files ? tut.files.length : 0;
+    const date = tut.createdAt ? formatDate(new Date(tut.createdAt).toISOString().split('T')[0]) : '';
+    
+    return `
+      <div class="tutorial-card" onclick="openViewTutorial('${tut._fsId}')">
+        <div class="tutorial-card-header">
+          <div class="tutorial-card-icon">${icon}</div>
+          <div class="tutorial-card-info">
+            <div class="tutorial-card-title">${tut.title}</div>
+            <span class="tutorial-card-category">${tut.category}</span>
+          </div>
+        </div>
+        ${tut.description ? `<div class="tutorial-card-description">${tut.description}</div>` : ''}
+        <div class="tutorial-card-footer">
+          <span class="tutorial-card-meta">📋 ${stepCount} langkah</span>
+          ${fileCount > 0 ? `<span class="tutorial-card-meta">📁 ${fileCount} file</span>` : ''}
+          ${date ? `<span class="tutorial-card-meta">📅 ${date}</span>` : ''}
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openEditTutorial('${tut._fsId}')" title="Edit">✏️</button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTutorial('${tut._fsId}')" title="Hapus">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openViewTutorial(id) {
+  const tut = DB.tutorial.find(t => t._fsId === id);
+  if (!tut) return;
+  
+  currentTutorialId = id;
+  const title = document.getElementById('view-tutorial-title');
+  const body = document.getElementById('view-tutorial-body');
+  
+  title.textContent = tut.title;
+  
+  const icons = {
+    'Umum': '📖',
+    'Dashboard': '📊',
+    'Kendala': '🔧',
+    'Request': '📝',
+    'Report': '📋',
+    'Kalender': '📅',
+    'Faktur': '🧾',
+    'Note': '🗒️',
+    'Akun': '👤'
+  };
+  
+  const icon = icons[tut.category] || '📚';
+  
+  let html = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:48px">${icon}</div>
+      <div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:4px">${tut.title}</div>
+        <span class="tutorial-card-category">${tut.category}</span>
+      </div>
+    </div>
+  `;
+  
+  if (tut.description) {
+    html += `
+      <div style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:6px;color:var(--text)">📝 Keterangan</div>
+        <div style="color:var(--text2);line-height:1.6">${tut.description}</div>
+      </div>
+    `;
+  }
+  
+  if (tut.steps && tut.steps.length) {
+    html += `
+      <div style="margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:12px;font-size:15px">📋 Langkah-Langkah</div>
+        ${tut.steps.map((step, i) => `
+          <div class="tutorial-step-item" style="margin-bottom:10px">
+            <div style="display:flex;align-items:start;gap:10px">
+              <div class="tutorial-step-number">${i + 1}</div>
+              <div style="flex:1;color:var(--text2);line-height:1.6">${step}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  if (tut.files && tut.files.length) {
+    html += `
+      <div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:15px">📁 File Pendukung</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px">
+          ${tut.files.map((file, i) => {
+            const mediaTag = file.type === 'image' 
+              ? `<img src="${file.data}" alt="${file.name}" style="width:100%;height:120px;object-fit:cover;display:block">`
+              : `<video src="${file.data}" style="width:100%;height:120px;object-fit:cover;display:block" muted></video>`;
+            
+            return `
+              <div class="tutorial-file-item" onclick="previewTutorialMedia(${i})">
+                ${mediaTag}
+                <div class="tutorial-file-name" title="${file.name}">${file.name}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  body.innerHTML = html;
+  openModal('modal-view-tutorial');
+}
+
+function previewTutorialMedia(index) {
+  const tut = DB.tutorial.find(t => t._fsId === currentTutorialId);
+  if (!tut || !tut.files) return;
+  
+  const file = tut.files[index];
+  if (!file) return;
+  
+  const content = document.getElementById('media-preview-content');
+  const title = document.getElementById('media-preview-title');
+  
+  title.textContent = file.name;
+  
+  if (file.type === 'image') {
+    content.innerHTML = `<img src="${file.data}" style="max-width:100%;max-height:80vh;object-fit:contain">`;
+  } else {
+    content.innerHTML = `<video src="${file.data}" controls style="max-width:100%;max-height:80vh" autoplay></video>`;
+  }
+  
+  showModal('modal-media-preview');
+}
+
+function editTutorialFromView() {
+  closeModal('modal-view-tutorial');
+  openEditTutorial(currentTutorialId);
+}
+
+// Expose tutorial functions globally
+window.openAddTutorial=openAddTutorial;
+window.openEditTutorial=openEditTutorial;
+window.addTutorialStep=addTutorialStep;
+window.removeTutorialStep=removeTutorialStep;
+window.saveTutorial=saveTutorial;
+window.deleteTutorial=deleteTutorial;
+window.handleTutorialFileInput=handleTutorialFileInput;
+window.removeTutorialFile=removeTutorialFile;
+window.previewMedia=previewMedia;
+window.closeMediaPreview=closeMediaPreview;
+window.renderTutorials=renderTutorials;
+window.openViewTutorial=openViewTutorial;
+window.previewTutorialMedia=previewTutorialMedia;
+window.editTutorialFromView=editTutorialFromView;
+
 // Close PDF viewer on backdrop click
 document.getElementById('modal-pdf-viewer').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-pdf-viewer')) closePdfViewer();
@@ -4642,6 +5358,10 @@ document.getElementById('modal-pdf-viewer').addEventListener('click', e => {
     <div class="mobile-nav-item" id="mnav-akun-odoo" onclick="showPage('akun-odoo');setMobileNav('akun-odoo')">
       <span class="mobile-nav-icon">👤</span>
       <span>Akun</span>
+    </div>
+    <div class="mobile-nav-item" id="mnav-tutorial" onclick="showPage('tutorial');setMobileNav('tutorial')">
+      <span class="mobile-nav-icon">📚</span>
+      <span>Tutorial</span>
     </div>
   </div>
 </nav>
